@@ -1,0 +1,19 @@
+# config files
+config.json
+
+# venv
+venv/
+
+# byte compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# distribution / packaging
+build/
+dist/
+*.egg-info
+
+# other files/dirs
+ai/
+setup-aws/

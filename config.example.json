@@ -1,0 +1,33 @@
+{
+    "api_id": "",
+    "api_hash": "",
+    "api_token": "",
+    "channels": [""],
+    "pattern": "\\bexample\\b",
+    "logfile": "data/log.txt",
+    "mt5_connections": {
+        "icmarkets-demo": {
+            "login": "",
+            "password": "",
+            "server": "",
+            "strategy": ""
+        },
+        "icmarkets-live": {
+            "login": "",
+            "password": "",
+            "server": "",
+            "strategy": ""
+        }
+    },
+    "strategies": {
+        "icmarkets-demo": {
+            "risklevel": 0.015,
+            "portfolioheat": 5
+        },
+        "icmarkets-live": {
+            "risklevel": 0.01,
+            "portfolioheat": 10
+        }
+    }
+}
+

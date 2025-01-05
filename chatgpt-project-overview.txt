@@ -1,0 +1,19 @@
+telegram_mt5_bot/
+├── src/
+│   ├── __init__.py
+│   ├── main.py            # Startpunt van het programma
+│   ├── telegram_listener.py  # Code voor Telegram-integratie
+│   ├── signal_parser.py   # Klasse/methodes om signalen te parsen
+│   ├── trade_order.py     # Klasse voor het opzetten van trade orders
+│   ├── position_sizer.py  # Berekening van positie-grootte
+│   ├── mt5_connector.py   # MT5 API-connectie
+│   ├── logger.py          # Logging-configuratie
+│   └── exceptions.py      # Custom exception handling
+├── tests/                 # Unit tests voor de applicatie
+│   ├── test_signal_parser.py
+│   ├── test_position_sizer.py
+│   ├── test_mt5_connector.py
+│   └── ...
+├── requirements.txt       # Dependencies van het project
+├── .env                   # Configuratie en API-sleutels (niet delen)
+└── README.md              # Uitleg over het project
