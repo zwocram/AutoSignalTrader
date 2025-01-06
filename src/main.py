@@ -59,6 +59,7 @@ def main():
     # Start de MT5 terminal
     if not mt5.initialize():
         logger.info("initialize mt5 failed")
+        print(mt5.last_error())
         mt5.shutdown()
         exit()
 
