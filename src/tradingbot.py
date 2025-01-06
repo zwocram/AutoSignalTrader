@@ -53,6 +53,15 @@ class ProcessTradeSignal:
             placeOrderResult = self.mt5handler.place_trade_order(tradeSignal.forexSymbol, price, tradeSignal.stop_loss, 
                 tradeSignal.target_profits[1], round(positionSize, 2), tradeSignal.tradeDirection, tradeSignal.ref_number)
             if placeOrderResult:
+                netAbsStoploss = round(abs(placeOrderResult.price - tradeSignal.stop_loss), 5)
+                netAbsStoplossEUR = netAbsStoploss / bidEURBase
+                realPositionRisk = 100 * (
+                        self.lotSize * placeOrderResult.volume * 
+                        netAbsStoplossEUR / accountEquity
+                )
+                netTargetProfits = [abs(t - placeOrderResult.price) for t in tradeSignal.target_profits]
+                netRR = [round((net_t / netAbsStoploss), 3) for net_t in netTargetProfits]
+                pdb.set_trace()
                 logger.info(
                     'SUMMARY:\n'
                     f'Successfully placed {round(positionSize, 2)} units (rounded from {round(positionSize, 4)}) of {tradeSignal.forexSymbol}.\n'
@@ -62,7 +71,9 @@ class ProcessTradeSignal:
                     f'EUR{baseCurrency} prices: {bidEURBasePrices} (we use the ask)\n'
                     f'Risk Level: {strategy.risklevel}\n'
                     f'Portfolio Heat: {strategy.portfolioheat}\n'
-                    f'Number of current open positions: {nrOpenPositions}'
+                    f'Number of current open positions: {nrOpenPositions}\n'
+                    f'Net position risk: {realPositionRisk:.2f}%\n'
+                    f'Net Risk Rewards: {netRR}'
                 )
 
 
@@ -90,7 +101,7 @@ if __name__ == '__main__':
         exit()
 
     from  tradesignalparser import TradeSignal
-    exTradeSignal =  TradeSignal("EURCAD", "Short", open_price=1.4387, stop_loss=1.4402, target_profits=[1.4381, 1.4372, 1.4365], ref_number='EURNZD1.8512')
+    exTradeSignal =  TradeSignal("EURCAD", "Short", open_price=1.4915, stop_loss=1.4935, target_profits=[1.4889, 1.4835, 1.4815], ref_number='EURNZD1.8512')
 
     from strategy import Strategy
     exStrategy = Strategy(0.015, 0.05)
