@@ -47,7 +47,6 @@ class MT5Handler:
     def get_price(self, symbol):
         tick_info = self.mt5.symbol_info_tick(symbol)
         if tick_info is None:
-            print(f"Error: Could not retrieve tick info for symbol '{symbol}'.")
             return None
         return (tick_info.bid, tick_info.ask)
 

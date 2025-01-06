@@ -31,6 +31,9 @@ class ProcessTradeSignal:
         # and retrieve the EURXXX price for that currency
         baseCurrency = tradeSignal.forexSymbol[-3:]
         bidEURBasePrices = self.mt5handler.get_price("EUR" + baseCurrency)
+        if not bidEURBasePrices:
+            logger.info(f"Error: Could not retrieve tick info for symbol EUR{baseCurrency}'. Probably not added in the MetaTrader 5 terminal.")
+            return
         bidEURBase = bidEURBasePrices[1]
 
         accountInfo = self.mt5handler.get_account_info()
@@ -87,7 +90,7 @@ if __name__ == '__main__':
         exit()
 
     from  tradesignalparser import TradeSignal
-    exTradeSignal =  TradeSignal("EURNZD", "Long", open_price=1.8370, stop_loss=1.8349, target_profits=[1.8415, 1.8427, 1.8475], ref_number='EURNZD1.8512')
+    exTradeSignal =  TradeSignal("EURCAD", "Short", open_price=1.4387, stop_loss=1.4402, target_profits=[1.4381, 1.4372, 1.4365], ref_number='EURNZD1.8512')
 
     from strategy import Strategy
     exStrategy = Strategy(0.015, 0.05)

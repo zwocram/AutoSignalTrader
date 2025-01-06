@@ -1,8 +1,12 @@
 # config files
 config.json
 
+# data
+data/log.txt
+
 # venv
 venv/
+venvwin/
 
 # byte compiled / optimized
 __pycache__/
