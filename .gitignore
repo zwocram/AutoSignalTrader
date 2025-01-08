@@ -21,3 +21,4 @@ dist/
 # other files/dirs
 ai/
 setup-aws/
+mz.session
