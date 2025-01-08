@@ -59,6 +59,11 @@ class ProcessTradeSignal:
                         self.lotSize * placeOrderResult.volume * 
                         netAbsStoplossEUR / accountEquity
                 )
+                optimalTPDistribution = 0
+                if len(tradeSignal.target_profits) == 3:
+                    takeProfit1 = tradeSignal.target_profits[1]
+                    takeProfit2 = tradeSignal.target_profits[2]
+                    optimalTPDistribution = 100 * (1 - takeProfit2) / (takeProfit1 - takeProfit2)
                 netTargetProfits = [abs(t - placeOrderResult.price) for t in tradeSignal.target_profits]
                 netRR = [round((net_t / netAbsStoploss), 3) for net_t in netTargetProfits]
                 logger.info(
@@ -74,7 +79,8 @@ class ProcessTradeSignal:
                     f'Net position risk: {realPositionRisk:.2f}%\n'
                     f'Net Risk Rewards: {netRR}\n'
                     f'Net stop loss: {round(netAbsStoploss, 5)}\n'
-                    f'Net stop loss (EUR): {round(netAbsStoplossEUR, 5)}'
+                    f'Net stop loss (EUR): {round(netAbsStoplossEUR, 5)}\n'
+                    f'Optimal take profit percentage for a 1:1 risk reward: {optimalTPDistribution:.1f}%\n'
                 )
 
 
