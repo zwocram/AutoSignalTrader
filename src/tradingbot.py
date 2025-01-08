@@ -61,7 +61,6 @@ class ProcessTradeSignal:
                 )
                 netTargetProfits = [abs(t - placeOrderResult.price) for t in tradeSignal.target_profits]
                 netRR = [round((net_t / netAbsStoploss), 3) for net_t in netTargetProfits]
-                pdb.set_trace()
                 logger.info(
                     'SUMMARY:\n'
                     f'Successfully placed {round(positionSize, 2)} units (rounded from {round(positionSize, 4)}) of {tradeSignal.forexSymbol}.\n'
