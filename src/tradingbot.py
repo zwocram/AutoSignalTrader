@@ -72,7 +72,9 @@ class ProcessTradeSignal:
                     f'Portfolio Heat: {strategy.portfolioheat}\n'
                     f'Number of current open positions: {nrOpenPositions}\n'
                     f'Net position risk: {realPositionRisk:.2f}%\n'
-                    f'Net Risk Rewards: {netRR}'
+                    f'Net Risk Rewards: {netRR}\n'
+                    f'Net stop loss: {round(netAbsStoploss, 5)}\n'
+                    f'Net stop loss (EUR): {round(netAbsStoplossEUR, 5)}'
                 )
 
 
