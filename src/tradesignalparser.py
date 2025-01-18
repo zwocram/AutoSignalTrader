@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 import pdb
 from typing import Optional, Dict, Any
@@ -19,6 +20,25 @@ class TradeSignal:
 class BaseTradeSignalParser:
     def parse_trade_signal(self, message):
         raise NotImplementedError("Subclasses should implement this method.")
+
+    def _prefix_reference_number(self, referenceNumber: str) -> str:
+        # Haal de huidige datum en tijd op
+        now = datetime.now()
+        
+        # Formatteer de onderdelen
+        year = now.strftime("%y")  # Laatste twee cijfers van het jaar
+        month = now.strftime("%m")  # Maand in 2 cijfers
+        day = now.strftime("%d")    # Dag in 2 cijfers
+        hour = now.strftime("%H")   # Uur in 24-uursnotatie, 2 cijfers
+        minute = now.strftime("%M")  # Minuten in 2 cijfers
+        second = now.strftime("%S")  # Seconden in 2 cijfers
+        
+        # Maak de prefix
+        prefix = f"{year}{month}{day}{hour}{minute}{second}"
+        
+        # Voeg de prefix toe aan de originele string
+        return f"{prefix}_{referenceNumber}"
+
 
     def clean_message(self, message):
         # Remove image URLs (assuming they start with http or https)
@@ -74,11 +94,12 @@ class TradeSignalParser1000PipBuilder(BaseTradeSignalParser):
                 target_profits.append(float(line.split(":")[1].strip()))  # Add to target_profits
             elif line.startswith("Ref#:"):
                 ref_number = line.split(":")[1].strip()
+                prefixedRefNumber = self._prefix_reference_number(ref_number)
 
         if None in [forexSymbol, tradeDirection, open_price, stop_loss, ref_number] or len(target_profits) < 3:
             raise ValueError("Invalid trade signal format: missing required fields")
 
-        return TradeSignal(forexSymbol, tradeDirection, open_price, stop_loss, target_profits, ref_number)
+        return TradeSignal(forexSymbol, tradeDirection, open_price, stop_loss, target_profits, prefixedRefNumber)
 
 class TelegramChannel2Parser(BaseTradeSignalParser):
     def parse_trade_signal(self, message):
