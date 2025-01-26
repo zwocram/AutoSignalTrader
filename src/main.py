@@ -47,7 +47,6 @@ def main():
         config = json.load(config_file)
 
     logger = logger_setup.LoggerSingleton.get_logger()
-    pdb.set_trace()
 
     # Argument parser instellen
     parser = argparse.ArgumentParser(description='MT5 Connection')
