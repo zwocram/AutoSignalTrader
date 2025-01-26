@@ -6,7 +6,9 @@ import pdb
 import contextlib
 import logger_setup
 import argparse
+import sys
 import MetaTrader5 as mt5
+from mt5handler import MT5Scheduler
 from strategy import Strategy
 from telegram_monitor import ChannelMonitor, BotMonitor
 
@@ -32,19 +34,36 @@ def suppress_output():
             logger.info("suppressing....")
             yield
 
+async def run_channel(channel_monitor):
+    await channel_monitor.start_monitoring()
+
+async def run_mt5_scheduler(mt5):
+    mt5_data_fetcher = MT5Scheduler(mt5)
+    await mt5_data_fetcher.start()
+
 def main():
 
     with open('config.json', 'r') as config_file:
         config = json.load(config_file)
 
     logger = logger_setup.LoggerSingleton.get_logger()
+    pdb.set_trace()
 
     # Argument parser instellen
     parser = argparse.ArgumentParser(description='MT5 Connection')
-    parser.add_argument('--connection', type=str, default='icmarkets-demo', 
-                        help='De MT5 connection name (default: icmarkets-demo)')
-
-    # Argumenten parseren
+    parser.add_argument(
+        '--connection',
+        type=str,
+        default='icmarkets-demo',
+        help='De MT5 connection name (default: icmarkets-demo)'
+    )
+    parser.add_argument(
+        '--trading-system',
+        type=str,
+        default='',
+        help='The trading system to trade.'
+    )   
+    
     args = parser.parse_args()
 
     # Maak een MT5Connection object aan
@@ -53,9 +72,13 @@ def main():
     strategy_params = get_strategy_params(config, args.connection)
     strategy = Strategy(**strategy_params)
 
-    # connect met MT5
-    # mt5_connection = MT5Connection.get_instance(login, password)
-    # mt5_connection.login(login, password)
+    tradingSystem = args.trading_system
+    try:
+        channel_monitor = ChannelMonitor(config, mt5, strategy, tradingSystem)
+    except ValueError as e:
+        logger.error(f'{e}')
+        sys.exit(1)
+
     # Start de MT5 terminal
     if not mt5.initialize():
         logger.info("initialize mt5 failed")
@@ -63,54 +86,29 @@ def main():
         mt5.shutdown()
         exit()
 
-
     if mt5.login(int(login), password=password, server=server):
         logger.info("Ingelogd op account:")
     else:
         logger.info("Inloggen mislukt. Fout:", mt5.last_error())
 
-    """
-    Start the telegram channel monitor
-    """
+    # Start the telegram channel monitor
     logger.info('Starting the channel monitor.')
-
-    channel_monitor = ChannelMonitor(config, mt5, strategy)
 
     loop = asyncio.get_event_loop()
 
-    async def run_channel():
-        await channel_monitor.start_monitoring()
-
-
-    """
-    Start the bot monitor
-    """
-    logger.info('Starting the bot monitor.')
-    api_token = config.get('api_token')
-    bot_monitor = BotMonitor(api_token, mt5)
-
-    # loop_bot = asyncio.get_event_loop()
-
-    # asyncio.run(bot_monitor.start_bot_monitoring())
-    async def run_bot():
-        await asyncio.gather(bot_monitor.start_bot_monitoring())
-
-    # asyncio.run(runbots())
     try:
-        loop.run_until_complete(run_channel())
+        loop.run_until_complete(asyncio.gather(
+            run_channel(channel_monitor),
+            run_mt5_scheduler(mt5)
+        ))
+
+
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt received. Exiting...")
     finally:
         loop.close()
         logger.info("Trading bot stopped.")
 
-
-    """
-    asyncio.gather(
-        bot_monitor.start_bot_monitoring(),
-        channel_monitor.start_monitoring()
-    )
-    """
 
     # Signal handler registreren
     def handle_signal(signum, frame):

@@ -95,11 +95,13 @@ class TradeSignalParser1000PipBuilder(BaseTradeSignalParser):
             elif line.startswith("Ref#:"):
                 ref_number = line.split(":")[1].strip()
                 prefixedRefNumber = self._prefix_reference_number(ref_number)
+        
+        tp_level_hit = [False for _ in target_profits]
 
         if None in [forexSymbol, tradeDirection, open_price, stop_loss, ref_number] or len(target_profits) < 3:
             raise ValueError("Invalid trade signal format: missing required fields")
 
-        return TradeSignal(forexSymbol, tradeDirection, open_price, stop_loss, target_profits, prefixedRefNumber)
+        return TradeSignal(forexSymbol, tradeDirection, open_price, stop_loss, target_profits, prefixedRefNumber, tp_level_hit)
 
 class TelegramChannel2Parser(BaseTradeSignalParser):
     def parse_trade_signal(self, message):

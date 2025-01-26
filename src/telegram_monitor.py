@@ -22,12 +22,20 @@ class MessageFilter:
 
 class ChannelMonitor:
 
-    def __init__(self, config_file, mt5, strategy):
+    def __init__(self, config_file, mt5, strategy, tradingSystem):
         self.tb = tradingbot.ProcessTradeSignal(mt5)
         self.mt5 = mt5
         self.strategy = strategy
         self.tradingbot = tradingbot.ProcessTradeSignal(mt5)
-        self.channel_usernames = [channel['name'] for channel in config_file['channels']]
+        if tradingSystem:
+            self.channel_usernames = [channel['name'] for channel in config_file['channels'] 
+                if channel.get('param_name') == tradingSystem]
+        else:
+            self.channel_usernames = [channel['name'] for channel in config_file['channels']]
+        
+        if not self.channel_usernames:
+            raise ValueError(f'Trading system {tradingSystem} could not be found.')
+
         self.api_id = float(config_file['api_id'])
         self.api_hash = config_file['api_hash']
         self.client = TelegramClient('mz', self.api_id, self.api_hash)

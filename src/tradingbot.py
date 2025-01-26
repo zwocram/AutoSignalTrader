@@ -60,6 +60,9 @@ class ProcessTradeSignal:
             placeOrderResult = self.mt5handler.place_trade_order(tradeSignal.forexSymbol, price, tradeSignal.stop_loss, 
                 tradeSignal.target_profits[nthTPLevel-1], round(positionSize, 2), tradeSignal.tradeDirection, tradeSignal.ref_number)
             if placeOrderResult:
+                # TO DO
+                # store the tradeSignal with reference to order id
+
                 netAbsStoploss = round(abs(placeOrderResult.price - tradeSignal.stop_loss), 5)
                 netAbsStoplossEUR = netAbsStoploss / bidEURBase
                 realPositionRisk = 100 * (

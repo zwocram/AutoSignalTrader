@@ -1,4 +1,5 @@
 import pdb
+import asyncio
 import MetaTrader5 as mt5
 from logger_setup import LoggerSingleton
 
@@ -78,3 +79,49 @@ class MT5Handler:
 
     def shutdown(self):
         self.mt5.shutdown()
+
+class MT5Scheduler:
+    def __init__(self, mt5, interval=300):
+        self.mt5 = mt5  # Verwijzing naar de MT5-terminal
+        self.interval = interval  # Interval in seconden
+        self.is_running = True  # Vlag om de loop te controleren
+
+    async def fetch_data(self):
+        while self.is_running:
+            logger.info('Running inside the fetch_data function. Do stuff here like retrieving position information.')
+            """
+            # Hier kun je de logica toevoegen om gegevens op te halen van de MT5-terminal
+            price = self.get_price()  # Voorbeeldfunctie om de prijs op te halen
+            logger.info(f"Opgehaalde prijs: {price}")
+
+            # Controleer of het bijna het einde van de handelsdag of week is
+            if self.is_near_end_of_trading_day():
+                logger.info("Bijna einde van de handelsdag!")
+            if self.is_near_end_of_trading_week():
+                logger.info("Bijna einde van de handelsweek!")
+            """
+            await asyncio.sleep(self.interval)
+
+    def get_price(self):
+        # Voeg hier de logica toe om de prijs op te halen van de MT5-terminal
+        # Dit is een placeholder
+        return self.mt5.get_last_price()  # Voorbeeldfunctie
+
+    def is_near_end_of_trading_day(self):
+        # Voeg hier de logica toe om te controleren of het bijna het einde van de handelsdag is
+        now = datetime.now()
+        end_of_day = now.replace(hour=23, minute=59, second=59)  # Voorbeeld: einde van de dag
+        return now >= end_of_day - timedelta(minutes=2)  # Controleer of het binnen 2 minuten is
+
+    def is_near_end_of_trading_week(self):
+        # Voeg hier de logica toe om te controleren of het bijna het einde van de handelsweek is
+        now = datetime.now()
+        end_of_week = now + timedelta(days=(5 - now.weekday()))  # Einde van de week (zaterdag)
+        end_of_week = end_of_week.replace(hour=23, minute=59, second=59)
+        return now >= end_of_week - timedelta(minutes=2)  # Controleer of het binnen 2 minuten is
+
+    async def start(self):
+        await self.fetch_data()
+
+    def stop(self):
+        self.is_running = False

@@ -7,7 +7,7 @@ httpx==0.28.1
 idna==3.10
 iniconfig==2.0.0
 MetaTrader5==5.0.4738
-numpy==2.2.1
+numpy==2.2.2
 packaging==24.2
 pluggy==1.5.0
 pyaes==1.6.1
