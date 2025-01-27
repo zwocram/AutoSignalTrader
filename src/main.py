@@ -95,12 +95,11 @@ def main():
 
     loop = asyncio.get_event_loop()
 
+    async def run_channel():
+        await channel_monitor.start_monitoring()
+        
     try:
-        loop.run_until_complete(asyncio.gather(
-            run_channel(channel_monitor)
-        ))
-
-
+        loop.run_until_complete(run_channel())
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt received. Exiting...")
     finally:
