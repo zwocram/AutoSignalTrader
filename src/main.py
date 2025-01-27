@@ -37,6 +37,7 @@ def suppress_output():
 async def run_channel(channel_monitor):
     await channel_monitor.start_monitoring()
 
+# experimental
 async def run_mt5_scheduler(mt5):
     mt5_data_fetcher = MT5Scheduler(mt5)
     await mt5_data_fetcher.start()
