@@ -97,8 +97,7 @@ def main():
 
     try:
         loop.run_until_complete(asyncio.gather(
-            run_channel(channel_monitor),
-            run_mt5_scheduler(mt5)
+            run_channel(channel_monitor)
         ))
 
 
