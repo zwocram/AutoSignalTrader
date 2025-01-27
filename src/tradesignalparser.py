@@ -5,17 +5,18 @@ from typing import Optional, Dict, Any
 
 
 class TradeSignal:
-    def __init__(self, forexSymbol, tradeDirection, open_price, stop_loss, target_profits, ref_number):
+    def __init__(self, forexSymbol, tradeDirection, open_price, stop_loss, target_profits, ref_number, tp_level_hit):
         self.forexSymbol = forexSymbol
         self.tradeDirection = tradeDirection
         self.open_price = open_price
         self.stop_loss = stop_loss
         self.target_profits = target_profits  # This will be an array
         self.ref_number = ref_number
+        self.tp_level_hit = tp_level_hit
 
     def __repr__(self):
         return (f"TradeSignal(forexSymbol={self.forexSymbol}, tradeDirection={self.tradeDirection}, open_price={self.open_price}, " 
-                f"stop_loss={self.stop_loss}, target_profits={self.target_profits}, ref_number={self.ref_number})")
+                f"stop_loss={self.stop_loss}, target_profits={self.target_profits}, ref_number={self.ref_number}), tp_level_hist={self.tp_level_hit}")
 
 class BaseTradeSignalParser:
     def parse_trade_signal(self, message):
@@ -34,7 +35,7 @@ class BaseTradeSignalParser:
         second = now.strftime("%S")  # Seconden in 2 cijfers
         
         # Maak de prefix
-        prefix = f"{year}{month}{day}{hour}{minute}{second}"
+        prefix = f"{year}{month}{day}{hour}{minute}"
         
         # Voeg de prefix toe aan de originele string
         return f"{prefix}_{referenceNumber}"
