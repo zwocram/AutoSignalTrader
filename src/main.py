@@ -44,25 +44,21 @@ async def run_mt5_scheduler(mt5):
 
 def main():
 
+    logger = logger_setup.LoggerSingleton.get_logger()
+
     with open('config.json', 'r') as config_file:
         config = json.load(config_file)
 
-    logger = logger_setup.LoggerSingleton.get_logger()
-
+    available_connections = ', '.join(config['mt5_connections'].keys())
+    
     # Argument parser instellen
     parser = argparse.ArgumentParser(description='MT5 Connection')
     parser.add_argument(
         '--connection',
         type=str,
-        default='icmarkets-demo',
-        help='De MT5 connection name (default: icmarkets-demo)'
+        required=True,  # Maak dit argument verplicht
+        help=f'De MT5 connection name (available: {available_connections}).'
     )
-    parser.add_argument(
-        '--trading-system',
-        type=str,
-        default='',
-        help='The trading system to trade.'
-    )   
     
     args = parser.parse_args()
 
@@ -72,9 +68,8 @@ def main():
     strategy_params = get_strategy_params(config, args.connection)
     strategy = Strategy(**strategy_params)
 
-    tradingSystem = args.trading_system
     try:
-        channel_monitor = ChannelMonitor(config, mt5, strategy, tradingSystem)
+        channel_monitor = ChannelMonitor(config, mt5, strategy)
     except ValueError as e:
         logger.error(f'{e}')
         sys.exit(1)

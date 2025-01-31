@@ -21,4 +21,5 @@ dist/
 # other files/dirs
 ai/
 setup-aws/
-mz.session
+mz.session*
+session_name*
