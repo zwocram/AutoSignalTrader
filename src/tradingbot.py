@@ -38,29 +38,20 @@ class ProcessTradeSignal:
             return
 
         accountInfo = self.mt5handler.get_account_info()
-        positionSize = self.calculate_position_size(accountInfo, tradeSignal, strategy, bidEURBase, price)
 
-        """
-        # eventuele uitbreiding als positionSize een array is.
-        if self.can_place_order(strategy):
-            # Controleer of positionSize een lijst is
-            if isinstance(positionSize, list):
-                # Loop door elk element in de positionSize array
-                for size in positionSize:
-                    placeOrderResult = self.place_order(tradeSignal, price, size, strategy)
-                    if placeOrderResult:
-                        self.log_order_summary(placeOrderResult, tradeSignal, accountInfo, strategy, bidEURBase)
-            else:
-                # Als positionSize geen lijst is, plaats dan gewoon één order
-                placeOrderResult = self.place_order(tradeSignal, price, positionSize, strategy)
+        positionSize = self.calculate_position_size(accountInfo, tradeSignal, strategy, bidEURBase, price)
+        if strategy.splitPositionSize:
+            positionSize = self.split_position_size(positionSize, len(tradeSignal.target_profits))
+
+        if not isinstance(positionSize, list):
+            positionSize = [positionSize]
+
+        if self.can_place_order(strategy, len(positionSize)):
+            for index, size in enumerate(positionSize):
+                tradeSignal.ref_number = tradeSignal.ref_number + "_" + str(index + 1)                 
+                placeOrderResult = self.place_order(tradeSignal, price, value, strategy)
                 if placeOrderResult:
                     self.log_order_summary(placeOrderResult, tradeSignal, accountInfo, strategy, bidEURBase)
-        """
-
-        if self.can_place_order(strategy):
-            placeOrderResult = self.place_order(tradeSignal, price, positionSize, strategy)
-            if placeOrderResult:
-                self.log_order_summary(placeOrderResult, tradeSignal, accountInfo, strategy, bidEURBase)
 
     def get_bid_eur_base(self, baseCurrency: str) -> float:
         bidEURBasePrices = self.mt5handler.get_price("EUR" + baseCurrency)
@@ -82,9 +73,22 @@ class ProcessTradeSignal:
             tradeSignal.stop_loss, bidEURBase, price
         )
 
-    def can_place_order(self, strategy) -> bool:
+    def can_place_order(self, strategy: Strategy, multiplier: int=1) -> bool:
+        """Checks if portfolio is too hot, i.e. no more positions allowed
+
+        Parameters
+        ----------
+        strategy: Strategy
+            The strategy that is used on the account. Is read from config.json
+            at app startup
+
+        multiplier: int, optional
+            Is position size is split into sub-position sizes we have to
+            multiply the number of allowed position in the portfolio
+            by the number of parts the position size was divided into.
+        """
         nrOpenPositions = self.mt5handler.get_open_positions()
-        return (nrOpenPositions * strategy.risklevel) < strategy.portfolioheat
+        return (multiplier * (nrOpenPositions * strategy.risklevel)) < strategy.portfolioheat
 
     def place_order(self, tradeSignal, price, positionSize, strategy):
         return self.mt5handler.place_trade_order(
@@ -93,6 +97,58 @@ class ProcessTradeSignal:
             round(positionSize, 2), tradeSignal.tradeDirection, 
             tradeSignal.ref_number
         )
+
+    def split_position_size(self, number, parts_count=3, largest_at_end=False):
+        """
+        Verdeelt een getal met twee decimalen in een willekeurig aantal delen, 
+        waarbij de som gelijk blijft aan het originele getal.
+
+        Parameters:
+            number (float): Het getal om te verdelen.
+            parts_count (int): Het aantal delen waarin het getal verdeeld moet worden.
+            largest_at_end (bool): Plaats de grootste waarde aan het eind als True, anders aan het begin.
+
+        Returns:
+            list: Delen waarvan de som gelijk is aan het originele getal.
+        """
+        try:
+            # Type-checks
+            if not isinstance(number, (int, float)):
+                raise ValueError(f"Invalid type for number: {type(number)}. Must be int or float.")
+            if not isinstance(parts_count, int) or parts_count <= 0:
+                raise ValueError(f"Invalid parts_count: {parts_count}. Must be a positive integer.")
+
+            # Zorg dat het getal twee decimalen heeft
+            number = round(number, 2)
+
+            # Verdeel het getal in gelijke delen
+            base = round(number / parts_count, 2)
+
+            # Bereken de som van de basisdelen en de afwijking
+            parts = [base] * parts_count
+            difference = round(number - sum(parts), 2)
+
+            # Wijs de afwijking toe aan delen
+            for i in range(abs(int(difference * 100))):
+                index = -1 if largest_at_end else 0
+                parts[index] += 0.01 if difference > 0 else -0.01
+                if not largest_at_end:
+                    parts.sort(reverse=True)
+
+            # Controleer of de som correct is
+            if round(sum(parts), 2) != number:
+                raise ValueError("Rounding error: Sum of parts does not match original number.")
+
+            # Sorteer de delen indien nodig
+            if largest_at_end:
+                parts.sort()
+
+            return parts
+
+        except Exception as e:
+            print(f"Error in split_position_size: {e}")
+            return []
+
 
     def log_order_summary(self, placeOrderResult, tradeSignal, accountInfo, strategy, bidEURBase):
         netAbsStoploss = round(abs(placeOrderResult.price - tradeSignal.stop_loss), 5)
