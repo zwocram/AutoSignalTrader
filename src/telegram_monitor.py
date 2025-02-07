@@ -129,7 +129,7 @@ class BotMonitor:
         
         message_text = update.message.text
 
-        parser = TradeSignalParser()
+        parser = get_parser()
 
         # Parse the message and perform actions
         if message_text:

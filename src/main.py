@@ -12,6 +12,8 @@ from mt5handler import MT5Scheduler
 from strategy import Strategy
 from telegram_monitor import ChannelMonitor, BotMonitor
 
+logger = logger_setup.LoggerSingleton.get_logger()
+
 def get_strategy_params(config, connection_name):
     strategy_name_from_connection = config['mt5_connections'].get(connection_name)['strategy']
     strategy_params = config['strategies'][strategy_name_from_connection]
