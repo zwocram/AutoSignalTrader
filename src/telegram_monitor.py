@@ -22,18 +22,34 @@ class MessageFilter:
 
 class ChannelMonitor:
 
-    def __init__(self, config_file, mt5, strategy):
+    def __init__(self, config_file, mt5, strategy, channel_params):
         self.tb = tradingbot.ProcessTradeSignal(mt5)
         self.mt5 = mt5
         self.strategy = strategy
         self.tradingbot = tradingbot.ProcessTradeSignal(mt5)
-        self.channel_usernames = [channel['name'] for channel in config_file['channels']]
-        
+        self.channel_usernames = self.load_channels(config_file, channel_params)
+
         self.api_id = float(config_file['api_id'])
         self.api_hash = config_file['api_hash']
         self.client = TelegramClient('mz', self.api_id, self.api_hash)
         self.is_running = True  # Vlag om de bot netjes te stoppen
 
+    def load_channels(self, config_file, channel_params):
+        # Laad de channels uit de config file
+        channels = config_file['channels']
+
+        # Als er geen channels zijn opgegeven, geef dan alle channels terug
+        if not channel_params:
+            return [channel['name'] for channel in channels]
+
+        # Filter de channels op basis van de opgegeven channel_params
+        filtered_channels = [
+            channel['name'] for channel in channels
+            if channel['param_name'] in channel_params
+        ]
+
+        return filtered_channels
+    
     async def load_messages_from_channel(self, channel, limit=10):
         try:
             entity = await self.client.get_entity(channel)
@@ -59,7 +75,7 @@ class ChannelMonitor:
             logger.info(f'Created a trade signal:\n{tradeSignal}')
             self.tradingbot.start_order_entry_process(tradeSignal, self.strategy)
         except ValueError as e:
-            logger.info(f'Received a message but it is NOT a valid trade signal.')
+            logger.info(f"Received a message in '{channelName}' but it is NOT a valid trade signal.")
 
     async def force_update(self):
         """Force updates for all configured channels."""

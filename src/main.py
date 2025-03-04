@@ -52,6 +52,7 @@ def main():
         config = json.load(config_file)
 
     available_connections = ', '.join(config['mt5_connections'].keys())
+    available_channels = ', '.join(channel['param_name'] for channel in config['channels'])
     
     # Argument parser instellen
     parser = argparse.ArgumentParser(description='MT5 Connection')
@@ -61,7 +62,13 @@ def main():
         required=True,  # Maak dit argument verplicht
         help=f'De MT5 connection name (available: {available_connections}).'
     )
-    
+    parser.add_argument(
+        '--channels', 
+        type=str, 
+        nargs='*', 
+        help=f'Channels to monitor (space-separated). Available: {available_channels}'
+    )
+
     args = parser.parse_args()
 
     # Maak een MT5Connection object aan
@@ -71,7 +78,7 @@ def main():
     strategy = Strategy(**strategy_params)
 
     try:
-        channel_monitor = ChannelMonitor(config, mt5, strategy)
+        channel_monitor = ChannelMonitor(config, mt5, strategy, args.channels)
     except ValueError as e:
         logger.error(f'{e}')
         sys.exit(1)
