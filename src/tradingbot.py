@@ -10,12 +10,16 @@ logger = logger_setup.LoggerSingleton.get_logger()
 
 class PositionSize:
 
-    def calculate_position_size(self, lot_size, account_equity, risk_percentage, stop_loss_price, eur_base_price, symbol_price):
+    def calculate_position_size(self, lot_size, account_equity, strategy, stop_loss_price, eur_base_price, 
+                    symbol_price):
         stopLossPips = round(abs(symbol_price - float(stop_loss_price)), 5)
         stopLossPipsEur = stopLossPips / eur_base_price
         logger.info(f'Stop Losses:\nstoploss: {round(stopLossPips, 5)}\nstoploss in EUR: {round(stopLossPipsEur, 5)}')
         
-        riskLevelAmount = round((account_equity * risk_percentage) / stopLossPipsEur / lot_size, 2)
+        if strategy.useFixedRiskAmount:
+            riskLevelAmount = round(strategy.fixedRiskAmount / stopLossPipsEur / lot_size, 2)
+        else:
+            riskLevelAmount = round((account_equity * strategy.risklevel) / stopLossPipsEur / lot_size, 2)
         
         return riskLevelAmount
 
@@ -27,7 +31,7 @@ class ProcessTradeSignal:
         self.positionSizer = PositionSize()
         self.lotSize = 100000
 
-    def start_order_entry_process(self, tradeSignal, strategy, split_lot_size=False):
+    def start_order_entry_process(self, tradeSignal, strategy):
         logger.info("Starting the order entry process.")
 
         baseCurrency = tradeSignal.forexSymbol[-3:]
@@ -89,7 +93,7 @@ class ProcessTradeSignal:
         """Calculates the position size of a new position
         """
         return self.positionSizer.calculate_position_size(
-            self.lotSize, accountInfo.equity, strategy.risklevel, 
+            self.lotSize, accountInfo.equity, strategy, 
             tradeSignal.stop_loss, bidEURBase, price
         )
 
@@ -239,10 +243,11 @@ if __name__ == '__main__':
         exit()
 
     from  tradesignalparser import TradeSignal
-    exTradeSignal =  TradeSignal("EURCAD", "Long", open_price=1.4868, stop_loss=1.4810, target_profits=[1.4930, 1.4940, 1.4950], ref_number='EURCAD1.5018', tp_level_hit=3)
+    exTradeSignal =  TradeSignal("EURCAD", "Long", open_price=1.5739, stop_loss=1.5702, target_profits=[1.5762, 1.57822, 1.5810], 
+                    ref_number='EURCAD1.5018', tp_level_hit=3)
 
     from strategy import Strategy
-    exStrategy = Strategy(0.015, 0.1, 3, '', False)
+    exStrategy = Strategy(0.015, 0.1, 3, '', False, False, 100)
 
     pts = ProcessTradeSignal(mt5)
     pts.start_order_entry_process(exTradeSignal, exStrategy)

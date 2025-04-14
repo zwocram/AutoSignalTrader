@@ -26,6 +26,7 @@ class ChannelMonitor:
         self.tb = tradingbot.ProcessTradeSignal(mt5)
         self.mt5 = mt5
         self.strategy = strategy
+        self.use_fixed_risk = use_fixed_risk
         self.tradingbot = tradingbot.ProcessTradeSignal(mt5)
         self.channel_usernames = self.load_channels(config_file, channel_params)
 
@@ -73,7 +74,7 @@ class ChannelMonitor:
             tradeSignal = parser.parse_trade_signal(message)
             logger.info(f'Received a valid trade signal:\n{message}')
             logger.info(f'Created a trade signal:\n{tradeSignal}')
-            self.tradingbot.start_order_entry_process(tradeSignal, self.strategy)
+            self.tradingbot.start_order_entry_process(tradeSignal, self.strategy, self.use_fixed_risk)
         except ValueError as e:
             logger.info(f"Received a message in '{channelName}' but it is NOT a valid trade signal.")
 

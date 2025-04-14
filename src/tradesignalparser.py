@@ -106,42 +106,77 @@ class TradeSignalParser1000PipBuilder(BaseTradeSignalParser):
 
         return TradeSignal(forexSymbol, tradeDirection, open_price, stop_loss, target_profits, ref_number, tp_level_hit)
 
-class TelegramChannel2Parser(BaseTradeSignalParser):
+class GoldSignalsIO(BaseTradeSignalParser):
     def parse_trade_signal(self, message):
-        # Implement parsing logic specific to Telegram Channel 2
-        # This is just an example; the actual parsing logic will depend on the message format
-        lines = message.strip().split('\n')
-        
+        lines = [line.strip() for line in message.strip().split('\n') if line.strip()]
+
         if len(lines) < 5:
             raise ValueError("Invalid trade signal format: not enough lines")
-        
-        open_price = None
+
+        firstLine = lines[0]
+        lower_first = firstLine.lower()
+
+        # Bepaal richting
+        if lower_first.startswith("buy"):
+            direction = "Buy"
+        elif lower_first.startswith("sell"):
+            direction = "Sell"
+        else:
+            raise ValueError("Invalid trade signal format: first line must start with 'Buy' or 'Sell'")
+
+        # Vereiste termen in de eerste regel
+        if "gold" not in lower_first:
+            raise ValueError("Invalid trade signal format: 'GOLD' must be in the first line")
+        if not any(sym in firstLine.upper() for sym in ["XAUUSD", "GOLD"]):
+            raise ValueError("Invalid trade signal format: 'XAUUSD' must be in the first line")
+
+        # Parse onderdelen
+        parts = firstLine.split()
+        if len(parts) < 3:
+            raise ValueError("Invalid trade signal format: missing forex symbol or entry price")
+
+        forexSymbol = parts[1]
+        forexName = parts[2]
+        entry = parts[3]
+
+        try:
+            open_price = float(entry.split('-')[0])
+        except ValueError:
+            raise ValueError(f"Invalid entry price format: {entry}")
+
+        # Verzamelen van overige gegevens
         stop_loss = None
         target_profits = []
         ref_number = None
 
-        for line in lines:
-            if line.startswith("Entry Price:"):
-                open_price = line.split(":")[1].strip()
-            elif line.startswith("Stop Loss:"):
-                stop_loss = line.split(":")[1].strip()
-            elif line.startswith("Take Profit:"):
-                target_profits.append(line.split(":")[1].strip())
-            elif line.startswith("Reference:"):
-                ref_number = line.split(":")[1].strip()
+        for line in lines[1:]:
+            lower = line.lower()
+            if lower.startswith("sl"):
+                try:
+                    stop_loss = float(line.split()[1])
+                except (IndexError, ValueError):
+                    raise ValueError(f"Invalid stop loss format: {line}")
+            elif lower.startswith("tp"):
+                try:
+                    target_profits.append(float(line.split()[1]))
+                except (IndexError, ValueError):
+                    raise ValueError(f"Invalid take profit format: {line}")
+            elif lower.startswith("ref#:"):
+                ref_number = line.split(":", 1)[1].strip()
 
-        if None in [open_price, stop_loss, ref_number] or len(target_profits) < 1:
+        tp_level_hit = [False for _ in target_profits]
+
+        if None in [forexSymbol, open_price, stop_loss] or len(target_profits) < 1:
             raise ValueError("Invalid trade signal format: missing required fields")
 
-        return TradeSignal(open_price, stop_loss, target_profits, ref_number)
-
+        return TradeSignal(forexSymbol, direction, open_price, stop_loss, target_profits, ref_number, tp_level_hit)
 
 # Factory function to get the appropriate parser
 def get_parser(channelName):
     if channelName == "Forex Signals - 1000 pip Builder":
         return TradeSignalParser1000PipBuilder()
-    elif channelName == "channel2":
-        return TelegramChannel2Parser()
+    elif channelName == "GoldSignalsIO - Swing":
+        return GoldSignalsIO()
     else:
         raise ValueError("Unknown channel name")
 
@@ -149,7 +184,7 @@ def get_parser(channelName):
 if __name__ == '__main__':
 
     # Create a TradeSignalParser with rules
-    parser = get_parser("Forex Signals - 1000 pip Builder")
+    pipbuilder_parser = get_parser("Forex Signals - 1000 pip Builder")
 
     # Test messages
     test_messages = [
@@ -184,12 +219,42 @@ Ref#: AUDCAD0.9500
 This is not investment advice nor a general recommendation. Please see T&Cs for more information"""
     ]
 
+
     # Execute the parsing for each test message
     for message in test_messages:
         try:
-            trade_signal = parser.parse_trade_signal(message)
+            trade_signal = pipbuilder_parser.parse_trade_signal(message)
             print(trade_signal)
         except ValueError as e:
             print(e)
 
-            
+
+    # Create a TradeSignalParser with rules
+    goldsignals_parser = get_parser("channel2")
+
+    test_messages_gold = [
+        """
+        Buy XAUUSD GOLD 3023-3020
+
+        SL 3013
+
+        TP 3026
+        TP 3028
+        TP 3033
+        TP 3043
+
+        Follow proper money management
+        """
+    ]
+
+
+    # Execute the parsing for each test message
+    for message in test_messages_gold:
+        try:
+            trade_signal = goldsignals_parser.parse_trade_signal(message)
+            print(trade_signal)
+        except ValueError as e:
+            print(e)
+
+
+

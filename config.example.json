@@ -1,32 +1,63 @@
 {
-    "api_id": "",
-    "api_hash": "",
-    "api_token": "",
-    "channels": [""],
+    "api_id": "234534",
+    "api_hash": "23452345",
+    "api_token": "23453452345:2345AAEliOz3c-23452345",
+    "channels": [
+        {
+            "name": "https://t.me/joinchat/4t5453t",
+            "title": "Channel Title",
+            "param_name": "channel_title"
+        }
+    ],
     "pattern": "\\bexample\\b",
     "logfile": "data/log.txt",
     "mt5_connections": {
-        "icmarkets-demo": {
-            "login": "",
-            "password": "",
-            "server": "",
-            "strategy": ""
+        "icmarkets-demo1000": {
+            "login": "5468465",
+            "password": "2345342v",
+            "server": "DEMO",
+            "strategy": "strat-1"
+        },
+        "icmarkets-demo3000": {
+            "login": "156160",
+            "password": "favwrqvr3425",
+            "server": "DEMO",
+            "strategy": "strat-2"
         },
         "icmarkets-live": {
-            "login": "",
-            "password": "",
-            "server": "",
-            "strategy": ""
+            "login": "352365",
+            "password": "ir93urt90w45s",
+            "server": "LIVE",
+            "strategy": "ENV-LIVE"
         }
     },
     "strategies": {
-        "icmarkets-demo": {
-            "risklevel": 0.015,
-            "portfolioheat": 5
+        "icmarkets-demo1000": {
+            "risklevel": 0.01,
+            "portfolioheat": 0.1,
+            "use_fixed_risk_amount": false,
+            "fixed_risk_size": 300,
+            "select_tp_level": 3,
+            "select_tp_level_explanation": "We can have multiple tp levels, pick the one that is specified in select_tp_level",
+            "split_position_size": false
+        },
+        "icmarkets-demo3000": {
+            "risklevel": 0.01,
+            "portfolioheat": 0.1,
+            "use_fixed_risk_amount": false,
+            "fixed_risk_size": 300,
+            "select_tp_level": 3,
+            "select_tp_level_explanation": "We can have multiple tp levels, pick the one that is specified in select_tp_level",
+            "split_position_size": false
         },
         "icmarkets-live": {
             "risklevel": 0.01,
-            "portfolioheat": 10
+            "portfolioheat": 0.10,
+            "use_fixed_risk_amount": false,
+            "fixed_risk_size": 300,
+            "select_tp_level": 3,
+            "select_tp_level_explanation": "We can have multiple tp levels, pick the one that is specified in select_tp_level",
+            "split_position_size": false
         }
     }
 }
