@@ -1,33 +1,89 @@
 {
-    "api_id": "",
-    "api_hash": "",
-    "api_token": "",
-    "channels": [""],
-    "pattern": "\\bexample\\b",
-    "logfile": "data/log.txt",
-    "mt5_connections": {
-        "icmarkets-demo": {
-            "login": "",
-            "password": "",
-            "server": "",
-            "strategy": ""
+    "api_id": "example_string",
+    "api_hash": "example_string",
+    "api_token": "example_string",
+    "channels": [
+        {
+            "name": "example_string",
+            "title": "example_string",
+            "param_name": "example_string"
         },
-        "icmarkets-live": {
-            "login": "",
-            "password": "",
-            "server": "",
-            "strategy": ""
+        {
+            "name": "example_string",
+            "title": "example_string",
+            "param_name": "example_string"
+        }
+    ],
+    "pattern": "example_string",
+    "logfile": "example_string",
+    "mt5_connections": {
+        "connection_1": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
+        },
+        "connection_2": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
+        },
+        "connection_3": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
+        },
+        "connection_4": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
+        },
+        "connection_5": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
         }
     },
     "strategies": {
-        "icmarkets-demo": {
-            "risklevel": 0.015,
-            "portfolioheat": 5
+        "strategy_1": {
+            "risklevel": 730.13,
+            "portfolioheat": 949.73,
+            "use_fixed_risk_amount": 50,
+            "fixed_risk_amount": 70,
+            "select_tp_level": 21,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 61
         },
-        "icmarkets-live": {
-            "risklevel": 0.01,
-            "portfolioheat": 10
+        "strategy_2": {
+            "risklevel": 303.84,
+            "portfolioheat": 454.96,
+            "use_fixed_risk_amount": 24,
+            "fixed_risk_amount": 94,
+            "select_tp_level": 73,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 87
+        },
+        "strategy_3": {
+            "risklevel": 593.84,
+            "portfolioheat": 685.39,
+            "use_fixed_risk_amount": 18,
+            "fixed_risk_amount": 55,
+            "select_tp_level": 66,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 94
+        },
+        "strategy_4": {
+            "risklevel": 158.65,
+            "portfolioheat": 799.78,
+            "use_fixed_risk_amount": 17,
+            "fixed_risk_amount": 42,
+            "select_tp_level": 46,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 94
         }
     }
 }
-

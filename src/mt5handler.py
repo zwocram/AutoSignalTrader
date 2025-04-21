@@ -46,23 +46,36 @@ class MT5Handler:
         nrOpenPositions = self.mt5.positions_total()
         return nrOpenPositions
 
+    def get_digts(self, symbol):
+        nr_digits = self.mt5.symbol_info(symbol).digits
+        return nr_digits
+
+    def get_contract_size(self, symbol):
+        trade_contract_size = self.mt5.symbol_info(symbol).trade_contract_size
+        return trade_contract_size
+
+    def get_minimal_volume_size(self, symbol):
+        min_volume_size = self.mt5.symbol_info(symbol).volume_min
+        return min_volume_size
+
     def get_price(self, symbol):
         tick_info = self.mt5.symbol_info_tick(symbol)
         if tick_info is None:
             return None
         return (tick_info.bid, tick_info.ask)
 
-
     def place_trade_order(self, symbol, entry_price, stop_loss, target_profit, volume, trade_direction, trade_ref_number):
         
+        digits = self.get_digts(symbol)
+
         order = {
             "action": self.mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
             "volume": volume,
-            "type": self.mt5.ORDER_TYPE_BUY if trade_direction=="Long" else self.mt5.ORDER_TYPE_SELL,
+            "type": self.mt5.ORDER_TYPE_BUY if trade_direction in ['Long', 'Buy'] else self.mt5.ORDER_TYPE_SELL,
             "price": entry_price,
-            "sl": stop_loss,
-            "tp": target_profit,
+            "sl": float(f"{round(stop_loss, 2):.{digits}f}"),
+            "tp":  float(f"{round(target_profit, 2):.{digits}f}"),
             "deviation": 5,
             "magic": 234000,
             "comment": trade_ref_number,
@@ -71,6 +84,7 @@ class MT5Handler:
         }
 
         result = self.mt5.order_send(order)
+        logger.info(self.mt5.last_error())
 
         if result.retcode != mt5.TRADE_RETCODE_DONE:
             logger.info(f"Order failed, retcode={result}, last error:\n{self.mt5.last_error()}")

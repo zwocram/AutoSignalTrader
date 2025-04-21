@@ -23,3 +23,4 @@ ai/
 setup-aws/
 mz.session*
 session_name*
+convert_json.py

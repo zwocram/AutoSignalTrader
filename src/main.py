@@ -56,6 +56,7 @@ def main():
     
     # Argument parser instellen
     parser = argparse.ArgumentParser(description='MT5 Connection')
+
     parser.add_argument(
         '--connection',
         type=str,

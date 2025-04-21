@@ -10,12 +10,16 @@ logger = logger_setup.LoggerSingleton.get_logger()
 
 class PositionSize:
 
-    def calculate_position_size(self, lot_size, account_equity, risk_percentage, stop_loss_price, eur_base_price, symbol_price):
+    def calculate_position_size(self, lot_size, account_equity, strategy, stop_loss_price, eur_base_price, 
+                    symbol_price):
         stopLossPips = round(abs(symbol_price - float(stop_loss_price)), 5)
         stopLossPipsEur = stopLossPips / eur_base_price
         logger.info(f'Stop Losses:\nstoploss: {round(stopLossPips, 5)}\nstoploss in EUR: {round(stopLossPipsEur, 5)}')
-        
-        riskLevelAmount = round((account_equity * risk_percentage) / stopLossPipsEur / lot_size, 2)
+
+        if strategy.useFixedRiskAmount:
+            riskLevelAmount = round(strategy.fixedRiskAmount / stopLossPipsEur / lot_size, 2)
+        else:
+            riskLevelAmount = round((account_equity * strategy.risklevel) / stopLossPipsEur / lot_size, 2)
         
         return riskLevelAmount
 
@@ -25,9 +29,8 @@ class ProcessTradeSignal:
     def __init__(self, mt5):
         self.mt5handler = MT5Handler(mt5)
         self.positionSizer = PositionSize()
-        self.lotSize = 100000
 
-    def start_order_entry_process(self, tradeSignal, strategy, split_lot_size=False):
+    def start_order_entry_process(self, tradeSignal, strategy):
         logger.info("Starting the order entry process.")
 
         baseCurrency = tradeSignal.forexSymbol[-3:]
@@ -41,11 +44,17 @@ class ProcessTradeSignal:
 
         accountInfo = self.mt5handler.get_account_info()
 
-        positionSize = self.calculate_position_size(accountInfo, tradeSignal, strategy, bidEURBase, price)
+        lot_size = self.mt5handler.get_contract_size(tradeSignal.forexSymbol)
+        min_volume_size = self.mt5handler.get_minimal_volume_size(tradeSignal.forexSymbol) 
+
+        positionSize = self.calculate_position_size(lot_size, accountInfo, tradeSignal, strategy, bidEURBase, price)
         logger.info(f'Original position size: {positionSize}')
 
         if strategy.splitPositionSize:
-            positionSize = self.split_position_size(positionSize, len(tradeSignal.target_profits))
+            # we can only split if the position size is 'splittable'
+            # e.g. we can't split a position size of 0.03 if there are 4 target profit levels
+            if ((positionSize / min_volume_size)  / len(tradeSignal.target_profits) )>= 1:
+                positionSize = self.split_position_size(positionSize, len(tradeSignal.target_profits))
 
         if not isinstance(positionSize, list):
             positionSize = [positionSize]
@@ -69,7 +78,7 @@ class ProcessTradeSignal:
                 if placeOrderResult:
                     orderResults.append(placeOrderResult)
 
-            self.log_order_summary(orderResults, tradeSignal, accountInfo, strategy, bidEURBase)
+            self.log_order_summary(orderResults, tradeSignal, accountInfo, strategy, bidEURBase, lot_size)
 
     def get_bid_eur_base(self, baseCurrency: str) -> float:
         bidEURBasePrices = self.mt5handler.get_price("EUR" + baseCurrency)
@@ -85,11 +94,11 @@ class ProcessTradeSignal:
             return None
         return bidaskPrice[1] if tradeSignal.tradeDirection == "Long" else bidaskPrice[0]
 
-    def calculate_position_size(self, accountInfo, tradeSignal, strategy, bidEURBase, price) -> float:
+    def calculate_position_size(self, lot_size, accountInfo, tradeSignal, strategy, bidEURBase, price) -> float:
         """Calculates the position size of a new position
         """
         return self.positionSizer.calculate_position_size(
-            self.lotSize, accountInfo.equity, strategy.risklevel, 
+            lot_size, accountInfo.equity, strategy, 
             tradeSignal.stop_loss, bidEURBase, price
         )
 
@@ -179,7 +188,7 @@ class ProcessTradeSignal:
             print(f"Error in split_position_size: {e}")
             return []
 
-    def log_order_summary(self, orderResults, tradeSignal, accountInfo, strategy, bidEURBase):
+    def log_order_summary(self, orderResults, tradeSignal, accountInfo, strategy, bidEURBase, lot_size):
         if not orderResults:
             logger.info("No orders received, skip logging output.")
             return
@@ -195,7 +204,7 @@ class ProcessTradeSignal:
 
         netAbsStoploss = round(abs(averagePrice - tradeSignal.stop_loss), 5)
         netAbsStoplossEUR = netAbsStoploss / bidEURBase
-        realPositionsRisk = [100 * (self.lotSize * result.volume * netAbsStoplossEUR / accountInfo.equity) for result in orderResults]
+        realPositionsRisk = [100 * (lot_size * result.volume * netAbsStoplossEUR / accountInfo.equity) for result in orderResults]
         
         netTargetProfits = [abs(t - averagePrice) for t in tradeSignal.target_profits]
         netRR = [round((net_t / netAbsStoploss), 3) for net_t in netTargetProfits]
@@ -239,10 +248,14 @@ if __name__ == '__main__':
         exit()
 
     from  tradesignalparser import TradeSignal
-    exTradeSignal =  TradeSignal("EURCAD", "Long", open_price=1.4868, stop_loss=1.4810, target_profits=[1.4930, 1.4940, 1.4950], ref_number='EURCAD1.5018', tp_level_hit=3)
+    exTradeSignal =  TradeSignal("EURCAD", "Long", open_price=1.5752, stop_loss=1.5722, target_profits=[1.5792, 1.5840, 1.5890], 
+                    ref_number='EURCAD1.5018', tp_level_hit=3)
+
+    exTradeSignal2 = TradeSignal('XAUUSD', 'Buy', open_price=3228.00, stop_loss=3200.00, target_profits=[3242.00, 3250.00, 3261.00, 3275.00], 
+                    ref_number='GS', tp_level_hit=4)
 
     from strategy import Strategy
-    exStrategy = Strategy(0.015, 0.1, 3, '', False)
+    exStrategy = Strategy(0.015, 0.1, 3, '', True, True, 50)
 
     pts = ProcessTradeSignal(mt5)
-    pts.start_order_entry_process(exTradeSignal, exStrategy)
+    pts.start_order_entry_process(exTradeSignal2, exStrategy)
