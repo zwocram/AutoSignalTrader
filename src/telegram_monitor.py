@@ -72,7 +72,6 @@ class ChannelMonitor:
 
         try:
             tradeSignal = parser.parse_trade_signal(message)
-            logger.info(f'Received a valid trade signal in {channelName}:\n{message}')
             logger.info(f"=============================================================")
             logger.info(f"Received a valid trade signal in '{channelName}' :\n{message}")
             logger.info(f'Created a trade signal:\n{tradeSignal}')
