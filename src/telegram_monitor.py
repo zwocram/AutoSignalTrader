@@ -28,6 +28,7 @@ class ChannelMonitor:
         self.strategy = strategy
         self.tradingbot = tradingbot.ProcessTradeSignal(mt5)
         self.channel_usernames = self.load_channels(config_file, channel_params)
+        
 
         self.api_id = float(config_file['api_id'])
         self.api_hash = config_file['api_hash']
@@ -71,7 +72,7 @@ class ChannelMonitor:
 
         try:
             tradeSignal = parser.parse_trade_signal(message)
-            logger.info(f'Received a valid trade signal:\n{message}')
+            logger.info(f'Received a valid trade signal in {channelName}:\n{message}')
             logger.info(f'Created a trade signal:\n{tradeSignal}')
             self.tradingbot.start_order_entry_process(tradeSignal, self.strategy)
         except ValueError as e:
