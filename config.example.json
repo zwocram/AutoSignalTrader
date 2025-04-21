@@ -1,64 +1,89 @@
 {
-    "api_id": "234534",
-    "api_hash": "23452345",
-    "api_token": "23453452345:2345AAEliOz3c-23452345",
+    "api_id": "example_string",
+    "api_hash": "example_string",
+    "api_token": "example_string",
     "channels": [
         {
-            "name": "https://t.me/joinchat/4t5453t",
-            "title": "Channel Title",
-            "param_name": "channel_title"
+            "name": "example_string",
+            "title": "example_string",
+            "param_name": "example_string"
+        },
+        {
+            "name": "example_string",
+            "title": "example_string",
+            "param_name": "example_string"
         }
     ],
-    "pattern": "\\bexample\\b",
-    "logfile": "data/log.txt",
+    "pattern": "example_string",
+    "logfile": "example_string",
     "mt5_connections": {
-        "icmarkets-demo1000": {
-            "login": "5468465",
-            "password": "2345342v",
-            "server": "DEMO",
-            "strategy": "strat-1"
+        "connection_1": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
         },
-        "icmarkets-demo3000": {
-            "login": "156160",
-            "password": "favwrqvr3425",
-            "server": "DEMO",
-            "strategy": "strat-2"
+        "connection_2": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
         },
-        "icmarkets-live": {
-            "login": "352365",
-            "password": "ir93urt90w45s",
-            "server": "LIVE",
-            "strategy": "ENV-LIVE"
+        "connection_3": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
+        },
+        "connection_4": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
+        },
+        "connection_5": {
+            "login": "example_string",
+            "password": "example_string",
+            "server": "example_string",
+            "strategy": "example_string"
         }
     },
     "strategies": {
-        "icmarkets-demo1000": {
-            "risklevel": 0.01,
-            "portfolioheat": 0.1,
-            "use_fixed_risk_amount": false,
-            "fixed_risk_size": 300,
-            "select_tp_level": 3,
-            "select_tp_level_explanation": "We can have multiple tp levels, pick the one that is specified in select_tp_level",
-            "split_position_size": false
+        "strategy_1": {
+            "risklevel": 730.13,
+            "portfolioheat": 949.73,
+            "use_fixed_risk_amount": 50,
+            "fixed_risk_amount": 70,
+            "select_tp_level": 21,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 61
         },
-        "icmarkets-demo3000": {
-            "risklevel": 0.01,
-            "portfolioheat": 0.1,
-            "use_fixed_risk_amount": false,
-            "fixed_risk_size": 300,
-            "select_tp_level": 3,
-            "select_tp_level_explanation": "We can have multiple tp levels, pick the one that is specified in select_tp_level",
-            "split_position_size": false
+        "strategy_2": {
+            "risklevel": 303.84,
+            "portfolioheat": 454.96,
+            "use_fixed_risk_amount": 24,
+            "fixed_risk_amount": 94,
+            "select_tp_level": 73,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 87
         },
-        "icmarkets-live": {
-            "risklevel": 0.01,
-            "portfolioheat": 0.10,
-            "use_fixed_risk_amount": false,
-            "fixed_risk_size": 300,
-            "select_tp_level": 3,
-            "select_tp_level_explanation": "We can have multiple tp levels, pick the one that is specified in select_tp_level",
-            "split_position_size": false
+        "strategy_3": {
+            "risklevel": 593.84,
+            "portfolioheat": 685.39,
+            "use_fixed_risk_amount": 18,
+            "fixed_risk_amount": 55,
+            "select_tp_level": 66,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 94
+        },
+        "strategy_4": {
+            "risklevel": 158.65,
+            "portfolioheat": 799.78,
+            "use_fixed_risk_amount": 17,
+            "fixed_risk_amount": 42,
+            "select_tp_level": 46,
+            "select_tp_level_explanation": "example_string",
+            "split_position_size": 94
         }
     }
 }
-

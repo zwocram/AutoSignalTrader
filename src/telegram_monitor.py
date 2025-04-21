@@ -26,7 +26,6 @@ class ChannelMonitor:
         self.tb = tradingbot.ProcessTradeSignal(mt5)
         self.mt5 = mt5
         self.strategy = strategy
-        self.use_fixed_risk = use_fixed_risk
         self.tradingbot = tradingbot.ProcessTradeSignal(mt5)
         self.channel_usernames = self.load_channels(config_file, channel_params)
 
@@ -72,11 +71,13 @@ class ChannelMonitor:
 
         try:
             tradeSignal = parser.parse_trade_signal(message)
-            logger.info(f'Received a valid trade signal:\n{message}')
+            logger.info(f"=============================================================")
+            logger.info(f"Received a valid trade signal in '{channelName}' :\n{message}")
             logger.info(f'Created a trade signal:\n{tradeSignal}')
-            self.tradingbot.start_order_entry_process(tradeSignal, self.strategy, self.use_fixed_risk)
+            logger.info(f"=============================================================")
+            self.tradingbot.start_order_entry_process(tradeSignal, self.strategy)
         except ValueError as e:
-            logger.info(f"Received a message in '{channelName}' but it is NOT a valid trade signal.")
+            logger.info(f"Received a nong tradeable message in '{channelName}' :\n{message}")
 
     async def force_update(self):
         """Force updates for all configured channels."""
@@ -150,7 +151,6 @@ class BotMonitor:
 
         # Parse the message and perform actions
         if message_text:
-            # Example: Just echo the message back
             await update.message.reply_text(f'Receive message:\n{message_text}')
             message_stripped = parser.clean_message(message_text)
             logger.info(f'Message received by the bot:\n{message_stripped}')
