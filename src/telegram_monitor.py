@@ -64,21 +64,27 @@ class ChannelMonitor:
             print(f"Error fetching messages from {channel}: {e}")
 
     async def handle_new_message(self, event):
-        message = event.message.message
+        message = event.message.text
         channelName = event.chat.title or event.chat.username
+        channelNameStripped = channelName.encode('ascii', 'ignore').decode('ascii').strip()
 
         parser = get_parser(channelName)
-        message_stripped = parser.clean_message(message)
+        message_stripped = parser.clean_message(message).encode('ascii', 'ignore').decode('ascii').strip()
 
         try:
-            tradeSignal = parser.parse_trade_signal(message)
+            tradeSignal = parser.parse_trade_signal(message_stripped)
             logger.info(f"=============================================================")
-            logger.info(f"Received a valid trade signal in '{channelName}' :\n{message}")
+            logger.info(f"Received a valid trade signal in '{channelNameStripped}' :\n{message_stripped}")
             logger.info(f'Created a trade signal:\n{tradeSignal}')
             logger.info(f"=============================================================")
             self.tradingbot.start_order_entry_process(tradeSignal, self.strategy)
         except ValueError as e:
-            logger.info(f"Received a nong tradeable message in '{channelName}' :\n{message}")
+            # check if it's an update on a sl or tp levl
+            if channelNameStripped == 'GTMO VIP':
+                if message_stripped.lower().startswith('adjust sl') or message_stripped.lower().startswith('adjust tp'):
+                    logger.info(f"Ready to update a SL or TP: \n'{message_stripped}")
+            logger.info(f"Skipping irrelevant mesasge.")
+            # print('stripped message: \n' + message_stripped)
 
     async def force_update(self):
         """Force updates for all configured channels."""

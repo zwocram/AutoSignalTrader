@@ -1,9 +1,10 @@
 from datetime import datetime
 import re
+import logger_setup
 import pdb
 from typing import Optional, Dict, Any
 
-
+logger = logger_setup.LoggerSingleton.get_logger() 
 class TradeSignal:
     def __init__(self, forexSymbol, tradeDirection, open_price, stop_loss, target_profits, ref_number, tp_level_hit):
         self.forexSymbol = forexSymbol
@@ -169,9 +170,12 @@ class GTMO(BaseTradeSignalParser):
 
 # Factory function to get the appropriate parser
 def get_parser(channelName):
+    channelNameStripped = channelName.encode('ascii', 'ignore').decode('ascii').strip()
+    logger.info(f"Channel name: '{channelNameStripped}'")
+
     if channelName == "Forex Signals - 1000 pip Builder":
         return TradeSignalParser1000PipBuilder()
-    elif channelName == "GTMO VIP":
+    elif "GTMO VIP" in channelName:
         return GTMO()
     else:
         raise ValueError("Unknown channel name")
@@ -226,20 +230,19 @@ This is not investment advice nor a general recommendation. Please see T&Cs for 
 
 
     # Create a TradeSignalParser with rules
-    goldsignals_parser = get_parser("GoldSignalsIO - Swing")
+    goldsignals_parser = get_parser("GTMO VIP")
 
     test_messages_gold = [
         """
-        Buy XAUUSD GOLD 3023-3020
+        Gold buy now 3023 - 3020
 
-        SL 3300
+        SL: 3300
 
-        TP 3380
-        TP 3420
-        TP 3450
-        TP 3480
-
-        Follow proper money management
+        TP: 3380
+        TP: 3420
+        TP: 3450
+        TP: 3480
+        TP: open
         """
     ]
 
@@ -261,8 +264,10 @@ This is not investment advice nor a general recommendation. Please see T&Cs for 
     # Execute the parsing for each test message
     for message in test_messages_gold:
         try:
-            trade_signal = goldsignals_parser.parse_trade_signal(message)
-            pts.start_order_entry_process(trade_signal, exStrategy)
+            message_stripped = goldsignals_parser.clean_message(message).encode('ascii', 'ignore').decode('ascii').strip()
+            trade_signal = goldsignals_parser.parse_trade_signal(message_stripped)
+            
+            # pts.start_order_entry_process(trade_signal, exStrategy)
             print(trade_signal)
         except ValueError as e:
             print(e)

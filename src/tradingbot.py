@@ -55,6 +55,9 @@ class ProcessTradeSignal:
             # e.g. we can't split a position size of 0.03 if there are 4 target profit levels
             if ((positionSize / min_volume_size)  / len(tradeSignal.target_profits) )>= 1:
                 positionSize = self.split_position_size(positionSize, len(tradeSignal.target_profits))
+            else:
+                # still splitting position size but every trade size is equal to the minimum volume size
+                positionSize = [min_volume_size] * len(tradeSignal.target_profits)
 
         if not isinstance(positionSize, list):
             positionSize = [positionSize]
@@ -77,6 +80,7 @@ class ProcessTradeSignal:
 
                 if placeOrderResult:
                     orderResults.append(placeOrderResult)
+                    # save the order result somewhere
 
             self.log_order_summary(orderResults, tradeSignal, accountInfo, strategy, bidEURBase, lot_size)
 

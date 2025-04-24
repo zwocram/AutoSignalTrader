@@ -88,6 +88,7 @@ class MT5Handler:
 
         if result.retcode != mt5.TRADE_RETCODE_DONE:
             logger.info(f"Order failed, retcode={result}, last error:\n{self.mt5.last_error()}")
+            return
         else:
             logger.info(f'Trade was placed successfully:\n{result}')
             return result
