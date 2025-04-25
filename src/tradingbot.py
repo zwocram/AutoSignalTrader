@@ -30,6 +30,13 @@ class ProcessTradeSignal:
         self.mt5handler = MT5Handler(mt5)
         self.positionSizer = PositionSize()
 
+    def adjust_positions(self, position_attribute_type):
+        """
+        Based on the position attribute (SL or TP), adjust
+        the corresponding attribute.
+        """
+        pass
+
     def start_order_entry_process(self, tradeSignal, strategy):
         logger.info("Starting the order entry process.")
 

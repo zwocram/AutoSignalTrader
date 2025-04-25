@@ -1,3 +1,4 @@
+import manage_shelve
 import json
 import re
 import asyncio
@@ -10,8 +11,9 @@ from tradesignalparser import TradeSignalParser1000PipBuilder, get_parser
 from telethon.sync import TelegramClient, events
 from telethon.errors import FloodWaitError
 
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.error import TelegramError
 
 from datetime import datetime
 
@@ -28,7 +30,9 @@ class ChannelMonitor:
         self.strategy = strategy
         self.tradingbot = tradingbot.ProcessTradeSignal(mt5)
         self.channel_usernames = self.load_channels(config_file, channel_params)
-        
+
+        self.telegram_token = config_file['api_token']
+        self.telegram_chat_id = config_file['telegram_chat_id']        
 
         self.api_id = float(config_file['api_id'])
         self.api_hash = config_file['api_hash']
@@ -51,6 +55,14 @@ class ChannelMonitor:
 
         return filtered_channels
     
+    async def send_bot_message(self, message):
+        bot = Bot(token=self.telegram_token)
+        try:
+            await bot.send_message(chat_id=self.telegram_chat_id, text=message)
+            logger.info("Message sent successfully.")
+        except TelegramError as e:
+            logger.error(f"Failed to send message: {e}")    
+    
     async def load_messages_from_channel(self, channel, limit=10):
         try:
             entity = await self.client.get_entity(channel)
@@ -63,16 +75,35 @@ class ChannelMonitor:
         except Exception as e:
             print(f"Error fetching messages from {channel}: {e}")
 
-    async def handle_new_message(self, event):
+    async def handle_edited_message(self, event):
         message = event.message.text
+        messageId = event.message.id
         channelName = event.chat.title or event.chat.username
         channelNameStripped = channelName.encode('ascii', 'ignore').decode('ascii').strip()
 
-        parser = get_parser(channelName)
+        parser = get_parser(channelNameStripped)
+        message_stripped = parser.clean_message(message).encode('ascii', 'ignore').decode('ascii').strip()
+
+        existing_message = manage_shelve.get_item(manage_shelve.SIGNALS_DB, str(messageId))
+        if existing_message:
+            logger.info(f"A trade message (ID: {messageId}) was edited.")
+            logger.info(f"Old value: \n{existing_message}")
+            logger.info(f"New value: \n{message_stripped}")
+            await self.send_bot_message("Een bestaand trade signal in '{channelNameStripped}' werd zojuist aangepast!")
+
+
+    async def handle_new_message(self, event):
+        message = event.message.text
+        messageId = event.message.id
+        channelName = event.chat.title or event.chat.username
+        channelNameStripped = channelName.encode('ascii', 'ignore').decode('ascii').strip()
+
+        parser = get_parser(channelNameStripped)
         message_stripped = parser.clean_message(message).encode('ascii', 'ignore').decode('ascii').strip()
 
         try:
             tradeSignal = parser.parse_trade_signal(message_stripped)
+            manage_shelve.store_data(manage_shelve.SIGNALS_DB, str(messageId), message_stripped)
             logger.info(f"=============================================================")
             logger.info(f"Received a valid trade signal in '{channelNameStripped}' :\n{message_stripped}")
             logger.info(f'Created a trade signal:\n{tradeSignal}')
@@ -81,9 +112,11 @@ class ChannelMonitor:
         except ValueError as e:
             # check if it's an update on a sl or tp levl
             if channelNameStripped == 'GTMO VIP':
-                if message_stripped.lower().startswith('adjust sl') or message_stripped.lower().startswith('adjust tp'):
+                if message_stripped.lower().startswith('adjust sl'):
                     logger.info(f"Ready to update a SL or TP: \n'{message_stripped}")
-            logger.info(f"Skipping irrelevant mesasge.")
+                    await self.send_bot_message("Let op! Er gaat een SL aangepast worden in '{channelNameStripped}'!")
+            else:
+                logger.info(f"Skipping irrelevant mesasge.")
             # print('stripped message: \n' + message_stripped)
 
     async def force_update(self):
@@ -117,6 +150,7 @@ class ChannelMonitor:
                 await self.client.get_entity(channel)
 
             self.client.add_event_handler(self.handle_new_message, events.NewMessage(chats=self.channel_usernames))
+            self.client.add_event_handler(self.handle_edited_message, events.MessageEdited(chats=self.channel_usernames))
 
             # Houd de hoofdloop actief en controleer de vlag
             while self.is_running:

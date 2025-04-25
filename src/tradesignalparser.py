@@ -170,12 +170,9 @@ class GTMO(BaseTradeSignalParser):
 
 # Factory function to get the appropriate parser
 def get_parser(channelName):
-    channelNameStripped = channelName.encode('ascii', 'ignore').decode('ascii').strip()
-    logger.info(f"Channel name: '{channelNameStripped}'")
-
     if channelName == "Forex Signals - 1000 pip Builder":
         return TradeSignalParser1000PipBuilder()
-    elif "GTMO VIP" in channelName:
+    elif channelName == "GTMO VIP":
         return GTMO()
     else:
         raise ValueError("Unknown channel name")
@@ -234,15 +231,15 @@ This is not investment advice nor a general recommendation. Please see T&Cs for 
 
     test_messages_gold = [
         """
-        Gold buy now 3023 - 3020
+Gold buy now 3302.5 - 3299
 
-        SL: 3300
+SL: 3296
 
-        TP: 3380
-        TP: 3420
-        TP: 3450
-        TP: 3480
-        TP: open
+TP: 3304
+TP: 3306
+TP: 3308
+TP: 3310
+TP: open
         """
     ]
 
@@ -258,6 +255,8 @@ This is not investment advice nor a general recommendation. Please see T&Cs for 
     exStrategy = Strategy(0.015, 0.1, 3, '', True, True, 50)
 
     from tradingbot import ProcessTradeSignal
+    import manage_shelve
+    import time
 
     pts = ProcessTradeSignal(mt5)
 
@@ -266,7 +265,9 @@ This is not investment advice nor a general recommendation. Please see T&Cs for 
         try:
             message_stripped = goldsignals_parser.clean_message(message).encode('ascii', 'ignore').decode('ascii').strip()
             trade_signal = goldsignals_parser.parse_trade_signal(message_stripped)
-            
+            manage_shelve.store_data(manage_shelve.SIGNALS_DB, str(int(time.time())), (message_stripped, trade_signal))
+            manage_shelve.show_all_data(manage_shelve.SIGNALS_DB)
+           #  
             # pts.start_order_entry_process(trade_signal, exStrategy)
             print(trade_signal)
         except ValueError as e:
