@@ -2,14 +2,17 @@
     "api_id": "example_string",
     "api_hash": "example_string",
     "api_token": "example_string",
+    "telegram_chat_id": "example_string",
     "channels": [
         {
             "name": "example_string",
+            "id": 82,
             "title": "example_string",
             "param_name": "example_string"
         },
         {
             "name": "example_string",
+            "id": 47,
             "title": "example_string",
             "param_name": "example_string"
         }
@@ -50,40 +53,40 @@
     },
     "strategies": {
         "strategy_1": {
-            "risklevel": 730.13,
-            "portfolioheat": 949.73,
-            "use_fixed_risk_amount": 50,
-            "fixed_risk_amount": 70,
-            "select_tp_level": 21,
+            "risklevel": 762.96,
+            "portfolioheat": 204.81,
+            "use_fixed_risk_amount": 93,
+            "fixed_risk_amount": 88,
+            "select_tp_level": 17,
             "select_tp_level_explanation": "example_string",
-            "split_position_size": 61
+            "split_position_size": 64
         },
         "strategy_2": {
-            "risklevel": 303.84,
-            "portfolioheat": 454.96,
-            "use_fixed_risk_amount": 24,
-            "fixed_risk_amount": 94,
-            "select_tp_level": 73,
+            "risklevel": 645.65,
+            "portfolioheat": 905.63,
+            "use_fixed_risk_amount": 36,
+            "fixed_risk_amount": 96,
+            "select_tp_level": 93,
             "select_tp_level_explanation": "example_string",
-            "split_position_size": 87
+            "split_position_size": 32
         },
         "strategy_3": {
-            "risklevel": 593.84,
-            "portfolioheat": 685.39,
-            "use_fixed_risk_amount": 18,
-            "fixed_risk_amount": 55,
-            "select_tp_level": 66,
+            "risklevel": 624.53,
+            "portfolioheat": 650.52,
+            "use_fixed_risk_amount": 27,
+            "fixed_risk_amount": 29,
+            "select_tp_level": 83,
             "select_tp_level_explanation": "example_string",
-            "split_position_size": 94
+            "split_position_size": 35
         },
         "strategy_4": {
-            "risklevel": 158.65,
-            "portfolioheat": 799.78,
-            "use_fixed_risk_amount": 17,
-            "fixed_risk_amount": 42,
-            "select_tp_level": 46,
+            "risklevel": 844.15,
+            "portfolioheat": 689.55,
+            "use_fixed_risk_amount": 87,
+            "fixed_risk_amount": 89,
+            "select_tp_level": 84,
             "select_tp_level_explanation": "example_string",
-            "split_position_size": 94
+            "split_position_size": 83
         }
     }
 }

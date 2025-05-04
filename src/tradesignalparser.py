@@ -124,20 +124,23 @@ class GTMO(BaseTradeSignalParser):
         direction = "Buy" if "buy" in first_line else "Sell"
         forexSymbol = "XAUUSD"  # Aangenomen dat dit altijd zo is voor goud
 
-        # Entry prices uit de eerste regel extraheren
-        try:
-            entry_part = first_line.split()[-3:]
-            entry_start = float(entry_part[0])
-            # entry_end = float(entry_part[2])  # Optioneel te gebruiken als range
-        except Exception as e:
-            raise ValueError(f"Invalid entry price format: {e}")
-        
-        open_price = entry_start
+        # find two decimals (entry prices) separated by dash
+        pattern = r"\b(\d+(?:\.\d{1,3})?)\s{0,2}-\s{0,2}(\d+(?:\.\d{1,3})?)\b"
+        match = re.search(pattern, first_line)    
+
+        if match:
+            signal_bid = match.group(1)
+            signal_ask = match.group(2)
+            range = match.group(0)
+        else:
+            raise ValueError(f"Invalid trade signal format: no valid prices found: \n{first_line}")
+
+        open_price = signal_bid
 
         # Andere onderdelen initialiseren
         stop_loss = None
         target_profits = []
-        ref_number = 'GTMO'
+        ref_number = f'GTMO#{signal_bid}'
 
         for line in lines[1:]:
             lower = line.lower()
@@ -244,13 +247,13 @@ TP: open
     ]
 
 
-
+    """
     import MetaTrader5 as mt5
     if not mt5.initialize():
         logger.info("initialize mt5 failed")
         mt5.shutdown()
         exit()
-
+    """ 
     from strategy import Strategy
     exStrategy = Strategy(0.015, 0.1, 3, '', True, True, 50)
 
@@ -258,7 +261,7 @@ TP: open
     import manage_shelve
     import time
 
-    pts = ProcessTradeSignal(mt5)
+    # pts = ProcessTradeSignal(mt5)
 
     # Execute the parsing for each test message
     for message in test_messages_gold:

@@ -10,7 +10,7 @@ import sys
 import MetaTrader5 as mt5
 from mt5handler import MT5Scheduler
 from strategy import Strategy
-from telegram_monitor import ChannelMonitor, BotMonitor
+from telegram_monitor import ChannelMonitor
 
 logger = logger_setup.LoggerSingleton.get_logger()
 
@@ -103,15 +103,23 @@ def main():
 
     async def run_channel():
         await channel_monitor.start_monitoring()
-        
-    try:
-        loop.run_until_complete(run_channel())
-    except KeyboardInterrupt:
-        logger.info("KeyboardInterrupt received. Exiting...")
-    finally:
-        loop.close()
-        logger.info("Trading bot stopped.")
 
+    def connect():
+        try:
+            loop.run_until_complete(run_channel())
+        except KeyboardInterrupt:
+            logger.info("KeyboardInterrupt received. Exiting...")
+        except ConnectionError as e:
+            logger.info('Connection error, trying to reconnect...')
+            connect()
+        except ConnectionRefusedError as e:
+            logger.info('Connection refused error, trying to reconnect...')
+            connect()
+        finally:
+            loop.close()
+            logger.info("Trading bot stopped.")
+
+    connect()
 
     # Signal handler registreren
     def handle_signal(signum, frame):

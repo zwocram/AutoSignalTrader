@@ -10,6 +10,8 @@ import logger_setup
 from tradesignalparser import TradeSignalParser1000PipBuilder, get_parser
 from telethon.sync import TelegramClient, events
 from telethon.errors import FloodWaitError
+from telethon.tl.types import PeerChannel
+from telethon import functions
 
 from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
@@ -29,7 +31,7 @@ class ChannelMonitor:
         self.mt5 = mt5
         self.strategy = strategy
         self.tradingbot = tradingbot.ProcessTradeSignal(mt5)
-        self.channel_usernames = self.load_channels(config_file, channel_params)
+        self.channel_ids = self.load_channels(config_file, channel_params)
 
         self.telegram_token = config_file['api_token']
         self.telegram_chat_id = config_file['telegram_chat_id']        
@@ -45,11 +47,11 @@ class ChannelMonitor:
 
         # Als er geen channels zijn opgegeven, geef dan alle channels terug
         if not channel_params:
-            return [channel['name'] for channel in channels]
+            return [channel['id'] for channel in channels]
 
         # Filter de channels op basis van de opgegeven channel_params
         filtered_channels = [
-            channel['name'] for channel in channels
+            channel['id'] for channel in channels
             if channel['param_name'] in channel_params
         ]
 
@@ -59,9 +61,9 @@ class ChannelMonitor:
         bot = Bot(token=self.telegram_token)
         try:
             await bot.send_message(chat_id=self.telegram_chat_id, text=message)
-            logger.info("Message sent successfully.")
+            logger.info("Bot message sent successfully.")
         except TelegramError as e:
-            logger.error(f"Failed to send message: {e}")    
+            logger.error(f"Failed to send the bot message: {e}")    
     
     async def load_messages_from_channel(self, channel, limit=10):
         try:
@@ -86,11 +88,19 @@ class ChannelMonitor:
 
         existing_message = manage_shelve.get_item(manage_shelve.SIGNALS_DB, str(messageId))
         if existing_message:
-            logger.info(f"A trade message (ID: {messageId}) was edited.")
-            logger.info(f"Old value: \n{existing_message}")
-            logger.info(f"New value: \n{message_stripped}")
-            await self.send_bot_message("Een bestaand trade signal in '{channelNameStripped}' werd zojuist aangepast!")
-
+            last_existing_message = existing_message[len(existing_message) - 1]
+            if last_existing_message != message_stripped:
+                existing_message.append(message_stripped)
+                manage_shelve.store_data(manage_shelve.SIGNALS_DB, str(messageId), existing_message)
+                await self.send_bot_message(
+                    f"Een bestaand trade signal in '{channelNameStripped}' "
+                    "werd zojuist aangepast!"
+                    "New value: \n{message_stripped}"
+                    "Old value: \n{last_existing_message}"
+                )
+                logger.info(f"A trade message (ID: {messageId}) was edited.")
+                logger.info(f"Old value: \n{existing_message}")
+                logger.info(f"New value: \n{message_stripped}")
 
     async def handle_new_message(self, event):
         message = event.message.text
@@ -103,26 +113,33 @@ class ChannelMonitor:
 
         try:
             tradeSignal = parser.parse_trade_signal(message_stripped)
-            manage_shelve.store_data(manage_shelve.SIGNALS_DB, str(messageId), message_stripped)
+            manage_shelve.store_data(manage_shelve.SIGNALS_DB, str(messageId), [message_stripped])
             logger.info(f"=============================================================")
             logger.info(f"Received a valid trade signal in '{channelNameStripped}' :\n{message_stripped}")
             logger.info(f'Created a trade signal:\n{tradeSignal}')
             logger.info(f"=============================================================")
+            await self.send_bot_message(f"Trade signal \n{tradeSignal} gevormd voor bericht \n{message_stripped}.")
             self.tradingbot.start_order_entry_process(tradeSignal, self.strategy)
         except ValueError as e:
-            # check if it's an update on a sl or tp levl
             if channelNameStripped == 'GTMO VIP':
+                # check if it's an update on a sl or tp levl
                 if message_stripped.lower().startswith('adjust sl'):
-                    logger.info(f"Ready to update a SL or TP: \n'{message_stripped}")
-                    await self.send_bot_message("Let op! Er gaat een SL aangepast worden in '{channelNameStripped}'!")
+                    await self.send_bot_message("Adjusting SL: \n'{message_stripped}'!")
+                    logger.info(f"Adjusting SL: \n'{message_stripped}")
+                else:
+                    logger.info(f"Skipping irrelevant message in {channelNameStripped}.")
+            elif channelNameStripped == 'Forex Signals - 1000 pip Builder':
+                if message_stripped.startswith('The 1:1 Risk:Reward Target has been reached'):
+                    await self.send_bot_message("Adjusting stop losses for 1000 pip builder: \n'{message_stripped}'!")
+                    logger.info(f"Adjusting SL is justified for 1000 pip builder: \n'{message_stripped}")
             else:
-                logger.info(f"Skipping irrelevant mesasge.")
-            # print('stripped message: \n' + message_stripped)
+                logger.info(f"Skipping irrelevant message.")
+                # print('stripped message: \n' + message_stripped)
 
     async def force_update(self):
         """Force updates for all configured channels."""
         print("Forcing updates for all channels...")
-        for channel in self.channel_usernames:
+        for channel in self.channel_ids:
             try:
                 entity = await self.client.get_entity(channel)
                 if entity.username == "TopTradingSignalsvip":
@@ -136,7 +153,8 @@ class ChannelMonitor:
 
     async def start_monitoring(self):
         await self.client.start()
-        logger.info(f"Monitoring channels: {', '.join(self.channel_usernames)}")
+        dialogs = await self.client.get_dialogs() # refresh/update cache
+        logger.info(f"Monitoring channels: {', '.join(str(channel_id) for channel_id in self.channel_ids)}")
 
         # Schedule periodic updates
         # 20241222: disable for a while
@@ -146,11 +164,11 @@ class ChannelMonitor:
         # self.tb.start_process()
 
         async with self.client:
-            for channel in self.channel_usernames:
-                await self.client.get_entity(channel)
+            for channel in self.channel_ids:
+                await self.client.get_input_entity(channel)
 
-            self.client.add_event_handler(self.handle_new_message, events.NewMessage(chats=self.channel_usernames))
-            self.client.add_event_handler(self.handle_edited_message, events.MessageEdited(chats=self.channel_usernames))
+            self.client.add_event_handler(self.handle_new_message, events.NewMessage(chats=self.channel_ids))
+            self.client.add_event_handler(self.handle_edited_message, events.MessageEdited(chats=self.channel_ids))
 
             # Houd de hoofdloop actief en controleer de vlag
             while self.is_running:
@@ -171,40 +189,3 @@ class ChannelMonitor:
         await self.client.disconnect()  # Ontkoppel de Telegram-client
         print("Client disconnected. Goodbye!")
 
-class BotMonitor:
-
-    message_filter = MessageFilter()
-
-    def __init__(self, token: str, mt5):
-        self.token = token
-        self.application = ApplicationBuilder().token(self.token).build()
-        self.mt5 = mt5
-
-    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.message.reply_text('Hello! You can forward messages to me.')
-
-    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        # Get the text of the forwarded message
-        
-        message_text = update.message.text
-
-        parser = get_parser()
-
-        # Parse the message and perform actions
-        if message_text:
-            await update.message.reply_text(f'Receive message:\n{message_text}')
-            message_stripped = parser.clean_message(message_text)
-            logger.info(f'Message received by the bot:\n{message_stripped}')
-            if parser.parse_message(message_text):
-                logger.info(f'VALID trade signal.')
-            else:
-                logger.info('NOT a valid trade signal.')
-
-
-    def start_bot_monitoring(self) -> None:
-        # Add command and message handlers
-        self.application.add_handler(CommandHandler("start", self.start))
-        self.application.add_handler(MessageHandler(filters.TEXT & filters.FORWARDED, self.handle_message))
-
-        # Start the bot
-        self.application.run_polling()

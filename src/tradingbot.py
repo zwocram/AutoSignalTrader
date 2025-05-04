@@ -2,6 +2,7 @@ import logging
 import time
 import pdb
 import logger_setup
+import manage_shelve
 from strategy import Strategy
 from mt5handler import MT5Handler
 import MetaTrader5 as mt5
@@ -88,6 +89,10 @@ class ProcessTradeSignal:
                 if placeOrderResult:
                     orderResults.append(placeOrderResult)
                     # save the order result somewhere
+
+            # store the placed orders for future reference
+            key = int(time.time()) # epoch time
+            manage_shelve.store_data(manage_shelve.TRADES_POSITIONS_DB, key, orderResults)
 
             self.log_order_summary(orderResults, tradeSignal, accountInfo, strategy, bidEURBase, lot_size)
 

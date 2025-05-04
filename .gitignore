@@ -21,7 +21,7 @@ dist/
 
 # other files/dirs
 ai/
+misc/
 setup-aws/
 mz.session*
 session_name*
-convert_json.py
