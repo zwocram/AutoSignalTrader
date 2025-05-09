@@ -4,6 +4,7 @@ config.json
 # data
 data/log.txt
 data/trade_signals*
+data/signals_and_positions*
 
 # venv
 venv/

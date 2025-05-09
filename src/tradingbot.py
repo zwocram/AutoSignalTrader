@@ -51,7 +51,6 @@ class ProcessTradeSignal:
             return
 
         accountInfo = self.mt5handler.get_account_info()
-
         lot_size = self.mt5handler.get_contract_size(tradeSignal.forexSymbol)
         min_volume_size = self.mt5handler.get_minimal_volume_size(tradeSignal.forexSymbol) 
 
@@ -75,6 +74,7 @@ class ProcessTradeSignal:
             tpLevel = tradeSignal.target_profits[-1]
             refNumber = tradeSignal.ref_number
             orderResults = []
+            orderResultsDict = []
 
             for index, size in enumerate(positionSize):
                 # Check for more than 1 position size
@@ -84,17 +84,20 @@ class ProcessTradeSignal:
                     tpLevel = tradeSignal.target_profits[index]
 
                 placeOrderResult = self.place_order(tradeSignal, price, size, strategy, tpLevel)
-                time.sleep(0.5)  # Wacht om overbelasting van de server te voorkomen
+                time.sleep(0.4)  # Wacht om overbelasting van de server te voorkomen
 
                 if placeOrderResult:
+                    order_dict = placeOrderResult._asdict()
+                    order_dict['request'] = placeOrderResult.request._asdict()
                     orderResults.append(placeOrderResult)
+                    orderResultsDict.append(order_dict)
                     # save the order result somewhere
+
+            self.log_order_summary(orderResults, tradeSignal, accountInfo, strategy, bidEURBase, lot_size)
 
             # store the placed orders for future reference
             key = int(time.time()) # epoch time
-            manage_shelve.store_data(manage_shelve.TRADES_POSITIONS_DB, key, orderResults)
-
-            self.log_order_summary(orderResults, tradeSignal, accountInfo, strategy, bidEURBase, lot_size)
+            manage_shelve.store_data(manage_shelve.TRADES_POSITIONS_DB, str(key), orderResultsDict)
 
     def get_bid_eur_base(self, baseCurrency: str) -> float:
         bidEURBasePrices = self.mt5handler.get_price("EUR" + baseCurrency)

@@ -183,98 +183,65 @@ def get_parser(channelName):
 # Example usage
 if __name__ == '__main__':
 
-    # Create a TradeSignalParser with rules
-    pipbuilder_parser = get_parser("Forex Signals - 1000 pip Builder")
-
-    # Test messages
-    test_messages = [
-        """EURUSD Short
-Open Price: 1.0409
-SL: 1.0424 (15pips)
-Start Exit Zone TP: 1.0403
-1:1 Risk:Reward TP: 1.0394
-End Exit Zone TP: 1.0386
-Ref#: EURUSD1.0409
-
-This is not investment advice nor a general recommendation. Please see T&Cs for more information""",
-        
-        """GBPUSD Long
-Open Price: 1.2540
-SL: 1.2525 (15pips)
-Start Exit Zone TP: 1.2546
-1:1 Risk:Reward TP: 1.2555
-End Exit Zone TP: 1.2562
-Ref#: GBPUSD1.2540
-
-This is not investment advice nor a general recommendation. Please see T&Cs for more information""",
-        
-        """AUDCAD Short
-Open Price: 0.9500
-SL: 0.9520 (20pips)
-Start Exit Zone TP: 0.9490
-1:1 Risk:Reward TP: 0.9480
-End Exit Zone TP: 0.9470
-Ref#: AUDCAD0.9500
-
-This is not investment advice nor a general recommendation. Please see T&Cs for more information"""
-    ]
+    from tradingbot import ProcessTradeSignal
+    import manage_shelve
+    import time
 
 
-    # Execute the parsing for each test message
-    for message in test_messages:
-        try:
-            trade_signal = pipbuilder_parser.parse_trade_signal(message)
-            print(trade_signal)
-        except ValueError as e:
-            print(e)
+    from strategy import Strategy
+    exStrategy = Strategy(0.015, 0.1, 3, '', True, True, 50)    
 
-
-    # Create a TradeSignalParser with rules
-    goldsignals_parser = get_parser("GTMO VIP")
-
-    test_messages_gold = [
-        """
-Gold buy now 3302.5 - 3299
-
-SL: 3296
-
-TP: 3304
-TP: 3306
-TP: 3308
-TP: 3310
-TP: open
-        """
-    ]
-
-
-    """
     import MetaTrader5 as mt5
     if not mt5.initialize():
         logger.info("initialize mt5 failed")
         mt5.shutdown()
         exit()
-    """ 
-    from strategy import Strategy
-    exStrategy = Strategy(0.015, 0.1, 3, '', True, True, 50)
 
-    from tradingbot import ProcessTradeSignal
-    import manage_shelve
-    import time
+    pts = ProcessTradeSignal(mt5)
 
-    # pts = ProcessTradeSignal(mt5)
+    channelname = "Forex Signals - 1000 pip Builder"
+
+    # Create a TradeSignalParser with rules
+    parser = get_parser(channelname)
+
+    if channelname == 'Forex Signals - 1000 pip Builder':
+
+        # Test messages
+        test_messages = [
+            """NZDUSD Long
+Open Price: 0.6004
+SL: 0.5960 (15pips)
+Start Exit Zone TP: 0.6035
+1:1 Risk:Reward TP: 0.6050
+End Exit Zone TP: 0.6075
+Ref#: NZDUSD0.6004
+
+
+This is not investment advice nor a general recommendation. Please see T&Cs for more information
+"""
+        ]
+    elif channelname == 'GTMO VIP':
+        test_messages = [
+            """
+Gold buy now 3416.2 - 3420
+
+SL: 3405.1
+
+TP: 3435
+TP: 3450
+TP: 3475
+TP: 3500
+TP: open
+        """
+        ]
+    
 
     # Execute the parsing for each test message
-    for message in test_messages_gold:
+    for message in test_messages:
         try:
-            message_stripped = goldsignals_parser.clean_message(message).encode('ascii', 'ignore').decode('ascii').strip()
-            trade_signal = goldsignals_parser.parse_trade_signal(message_stripped)
-            manage_shelve.store_data(manage_shelve.SIGNALS_DB, str(int(time.time())), (message_stripped, trade_signal))
-            manage_shelve.show_all_data(manage_shelve.SIGNALS_DB)
-           #  
-            # pts.start_order_entry_process(trade_signal, exStrategy)
-            print(trade_signal)
+            message_stripped = parser.clean_message(message).encode('ascii', 'ignore').decode('ascii').strip()
+            trade_signal = parser.parse_trade_signal(message_stripped)
+            pts.start_order_entry_process(trade_signal, exStrategy)
+            #print(trade_signal)
         except ValueError as e:
             print(e)
-
-
-

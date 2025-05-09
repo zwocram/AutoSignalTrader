@@ -94,10 +94,11 @@ class ChannelMonitor:
                 manage_shelve.store_data(manage_shelve.SIGNALS_DB, str(messageId), existing_message)
                 await self.send_bot_message(
                     f"Een bestaand trade signal in '{channelNameStripped}' "
-                    "werd zojuist aangepast!"
-                    "New value: \n{message_stripped}"
-                    "Old value: \n{last_existing_message}"
+                    f"werd zojuist aangepast!\n"
+                    f"New value:\n{message_stripped}\n"
+                    f"Old value:\n{last_existing_message}"
                 )
+                
                 logger.info(f"A trade message (ID: {messageId}) was edited.")
                 logger.info(f"Old value: \n{existing_message}")
                 logger.info(f"New value: \n{message_stripped}")
@@ -124,14 +125,14 @@ class ChannelMonitor:
             if channelNameStripped == 'GTMO VIP':
                 # check if it's an update on a sl or tp levl
                 if message_stripped.lower().startswith('adjust sl'):
-                    await self.send_bot_message("Adjusting SL: \n'{message_stripped}'!")
+                    await self.send_bot_message(f"Adjusting SL: \n'{message_stripped}'!")
                     logger.info(f"Adjusting SL: \n'{message_stripped}")
                 else:
                     logger.info(f"Skipping irrelevant message in {channelNameStripped}.")
             elif channelNameStripped == 'Forex Signals - 1000 pip Builder':
                 if message_stripped.startswith('The 1:1 Risk:Reward Target has been reached'):
-                    await self.send_bot_message("Adjusting stop losses for 1000 pip builder: \n'{message_stripped}'!")
-                    logger.info(f"Adjusting SL is justified for 1000 pip builder: \n'{message_stripped}")
+                    await self.send_bot_message(f"Adjusting stop losses for 1000 pip builder: \n{message_stripped}!")
+                    logger.info(f"Adjusting SL is justified for 1000 pip builder: \n{message_stripped}")
             else:
                 logger.info(f"Skipping irrelevant message.")
                 # print('stripped message: \n' + message_stripped)
