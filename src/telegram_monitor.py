@@ -139,18 +139,16 @@ class ChannelMonitor:
 
     async def force_update(self):
         """Force updates for all configured channels."""
-        print("Forcing updates for all channels...")
         for channel in self.channel_ids:
             try:
-                entity = await self.client.get_entity(channel)
-                if entity.username == "TopTradingSignalsvip":
-                    print(f"Forcing update for {entity.username}")
-                    await self.client.catch_up()  # Synchronize session state
+                entity = await self.client.get_input_entity(channel)
+                logger.info(f"Forcing updates for: {', '.join(str(channel_id) for channel_id in self.channel_ids)}")
+                await self.client.catch_up()  # Synchronize session state
             except FloodWaitError as e:
-                print(f"FloodWaitError: Waiting for {e.seconds} seconds before retrying...")
+                logger.info(f"FloodWaitError: Waiting for {e.seconds} seconds before retrying...")
                 await asyncio.sleep(e.seconds)
             except Exception as e:
-                print(f"Error forcing update for {channel}: {e}")
+                logger.info(f"Error forcing update for {channel}: {e}")
 
     async def start_monitoring(self):
         await self.client.start()
@@ -158,8 +156,8 @@ class ChannelMonitor:
         logger.info(f"Monitoring channels: {', '.join(str(channel_id) for channel_id in self.channel_ids)}")
 
         # Schedule periodic updates
-        # 20241222: disable for a while
-        # asyncio.create_task(self.periodic_force_update())
+        # sometimes the program halts and gets stuk in waiting for telegram
+        asyncio.create_task(self.periodic_force_update())
 
         # just force tradingbot to start 
         # self.tb.start_process()
@@ -175,11 +173,11 @@ class ChannelMonitor:
             while self.is_running:
                 await asyncio.sleep(1)
 
-    async def periodic_force_update(self, interval=300):
+    async def periodic_force_update(self, interval=900):
         """Periodically force updates every `interval` seconds."""
         while self.is_running:  # Controleer de vlag
-            await self.force_update()
             await asyncio.sleep(interval)
+            await self.force_update()
 
     async def graceful_shutdown(self):
         """Zorg voor een nette afsluiting."""

@@ -93,11 +93,17 @@ class ProcessTradeSignal:
                     orderResultsDict.append(order_dict)
                     # save the order result somewhere
 
+            # check zero prices
+            # orderResultsChecked = self.check_zero_prices(orderResults)
+
             self.log_order_summary(orderResults, tradeSignal, accountInfo, strategy, bidEURBase, lot_size)
 
             # store the placed orders for future reference
             key = int(time.time()) # epoch time
             manage_shelve.store_data(manage_shelve.TRADES_POSITIONS_DB, str(key), orderResultsDict)
+
+    def check_zero_prices(self, orderResults):
+        pass
 
     def get_bid_eur_base(self, baseCurrency: str) -> float:
         bidEURBasePrices = self.mt5handler.get_price("EUR" + baseCurrency)
